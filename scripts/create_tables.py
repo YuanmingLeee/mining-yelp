@@ -1,8 +1,8 @@
 import sqlite3
 
-from configs import BASE_DIR
+from configs import BASE_DIR, DATA_PATH
 
-conn = sqlite3.connect(BASE_DIR / 'data/yelp.sqlite')
+conn = sqlite3.connect(DATA_PATH / 'yelp.sqlite')
 
 c = conn.cursor()
 

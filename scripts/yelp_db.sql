@@ -82,10 +82,10 @@ CREATE TABLE user_friends
     FOREIGN KEY (friend_user_id) REFERENCES users (user_id)
 );
 
-CREATE TABLE user_entitle
+CREATE TABLE user_elite
 (
     user_id CHARACTER(22),
-    entitle INT,
-    PRIMARY KEY (user_id, entitle),
+    elite INT,
+    PRIMARY KEY (user_id, elite),
     FOREIGN KEY (user_id) REFERENCES users (user_id)
 );
