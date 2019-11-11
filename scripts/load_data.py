@@ -32,23 +32,23 @@ def load_user():
 
     # free after commit
     with sqlite3.connect(DB_PATH) as conn:
-        print('Processing user data frame')
-        user_df = df.drop(columns=['friends', 'elite'])
-        print('Commit user data into database')
-        user_df.to_sql(name='users', con=conn, index=False, if_exists='append')
-        conn.commit()
-        del user_df
-
-        print('Processing user friends data frame')
-        user_friends_df = list_to_multirow(df, 'user_id', 'friends')
-        user_friends_df.rename(columns={'friends': 'friend_user_id'}, inplace=True)
-        print('Commit user data into database')
-        user_friends_df.to_sql(name='user_friends', con=conn, index=False, if_exists='append')
-        conn.commit()
-        del user_friends_df
+        # print('Processing user data frame')
+        # user_df = df.drop(columns=['friends', 'elite'])
+        # print('Commit user data into database')
+        # user_df.to_sql(name='users', con=conn, index=False, if_exists='append')
+        # conn.commit()
+        # del user_df
+        #
+        # print('Processing user friends data frame')
+        # user_friends_df = list_to_multirow(df, 'user_id', 'friends')
+        # user_friends_df.rename(columns={'friends': 'friend_user_id'}, inplace=True)
+        # print('Commit user data into database')
+        # user_friends_df.to_sql(name='user_friends', con=conn, index=False, if_exists='append')
+        # conn.commit()
+        # del user_friends_df
 
         print('Processing user elite data frame')
-        elite_df = list_to_multirow(df, 'user_id', 'elite')
+        elite_df = list_to_multirow(df, 'user_id', 'elite', separator=',')
         print('Commit user elite data into database')
         elite_df.to_sql(name='user_elite', con=conn, index=False, if_exists='append')
         conn.commit()
@@ -85,8 +85,8 @@ def load_tip():
         conn.commit()
 
 
-def list_to_multirow(df: pd.DataFrame, index_name: str, list_name: str):
-    value_list = df[list_name].apply(lambda x: x.split(', ') if x != 'None' else [])
+def list_to_multirow(df: pd.DataFrame, index_name: str, list_name: str, separator=', '):
+    value_list = df[list_name].apply(lambda x: x.split(separator) if x != 'None' and x != '' else [])
     return pd.DataFrame({
         index_name: np.repeat(df[index_name].values, value_list.str.len()),
         list_name: np.concatenate(value_list)
@@ -95,12 +95,12 @@ def list_to_multirow(df: pd.DataFrame, index_name: str, list_name: str):
 
 if __name__ == '__main__':
     print('Loading business')
-    load_business()
+    # load_business()
     print('Loading user')
     load_user()
     print('Loading review')
-    load_review()
+    # load_review()
     print('Loading checkin')
-    load_checkin()
+    # load_checkin()
     print('Loading tip')
-    load_tip()
+    # load_tip()
