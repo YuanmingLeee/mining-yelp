@@ -1,0 +1,6 @@
+user_elite:
+  input: 12
+  fc1: 512
+  fc2: 512
+  fc3: 256
+  output: 2
