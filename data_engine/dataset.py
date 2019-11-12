@@ -3,7 +3,6 @@ from typing import Callable, Union, IO
 
 import pandas as pd
 import torch
-from sklearn import preprocessing
 from torch.utils import data as tdata
 
 
@@ -25,21 +24,3 @@ class EliteDataset(tdata.Dataset):
         sample = {'features': features, 'label': label}
 
         return sample
-
-
-def preprocessor(df: pd.DataFrame):
-    # remove unrelated info
-    df.drop(columns='user_id', inplace=True)
-    # split by label and balance
-    elite_df = df.loc[df.elite == 1]
-    nonelite_df = df.loc[df.elite == 0].sample(elite_df.shape[0])
-
-    # concatenate and shuffle
-    result = pd.concat([elite_df, nonelite_df]).sample(frac=1)
-
-    # clean
-    del elite_df, nonelite_df
-
-    # min max scaler
-    scaler = preprocessing.MinMaxScaler()
-    return pd.DataFrame(scaler.fit_transform(result))

@@ -12,9 +12,10 @@ from torch.optim.optimizer import Optimizer
 from torch.utils import data as tdata
 
 from configs import DATA_DIR, OUTPUT_DIR
-from helpers.data_loader import EliteDataset, preprocessor
-from helpers.utils import get_accuracy
+from data_engine.data_loader import preprocessor, load_data
+from data_engine.dataset import EliteDataset
 from models.EliteNet import EliteNet
+from .helper import get_accuracy
 
 random_seed = 42
 split_ratio = .2
@@ -24,37 +25,6 @@ epochs = 100
 eps = 1e-8
 weight_decay = 1e-6
 CSV_PATH = DATA_DIR / 'user-profiling.csv'
-
-
-def load_data(path: str, ratio: float):
-    """Prepare data from CSV_PATH for training and validation.
-    Args:
-        path (str): dataset file path
-        ratio (float): split ratio
-
-    Returns:
-        Tuple of training data loader, validation data loader and
-            a tuple of size containing training dataset size and validation
-            dataset size respectively
-    """
-    # get dataset
-    dataset = EliteDataset(path, preprocessor)
-
-    dataset_size = len(dataset)
-
-    # prepare for shuffle
-    indices = np.arange(dataset_size)
-    np.random.shuffle(indices)
-    split_idx = int(np.floor(ratio * dataset_size))
-    train_indices, val_indices = indices[split_idx:], indices[:split_idx]
-
-    # split dataset
-    train_sampler = tdata.SubsetRandomSampler(train_indices)
-    val_sampler = tdata.SubsetRandomSampler(val_indices)
-    train_loader = tdata.DataLoader(dataset, batch_size=bs, sampler=train_sampler)
-    val_loader = tdata.DataLoader(dataset, batch_size=bs, sampler=val_sampler)
-
-    return train_loader, val_loader, (len(train_indices), len(val_indices))
 
 
 def train(net: nn.Module, data_loader: tdata.DataLoader, optimizer: Optimizer, criterion: _Loss, data_size: int = None,
@@ -141,7 +111,8 @@ def test(net: nn.Module, data_loader: tdata.DataLoader, criterion, data_size: in
 def main():
     # prepare data
     print('Loading data...')
-    train_loader, val_loader, (train_size, val_size) = load_data(CSV_PATH, split_ratio)
+    dataset = EliteDataset(CSV_PATH, preprocessor)
+    train_loader, val_loader, (train_size, val_size) = load_data(dataset, split_ratio, bs=bs)
     print('Finish loading')
 
     # model
