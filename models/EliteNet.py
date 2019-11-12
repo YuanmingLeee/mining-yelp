@@ -14,14 +14,20 @@ class EliteNet(nn.Module):
         self.input = nn.Linear(C.input, C.fc1, bias=True)
         self.fc1 = nn.Linear(C.fc1, C.fc2, bias=True)
         self.bn_1 = nn.BatchNorm1d(C.fc2)
+        self.drop_1 = nn.Dropout(C.drop1)
         self.fc2 = nn.Linear(C.fc2, C.fc3, bias=True)
         self.bn_2 = nn.BatchNorm1d(C.fc3)
-        self.out = nn.Linear(C.fc3, C.output, bias=True)
+        self.drop_2 = nn.Dropout(C.drop2)
+        self.fc3 = nn.Linear(C.fc3, C.fc4, bias=True)
+        self.out = nn.Linear(C.fc4, C.output, bias=True)
 
     def forward(self, x):
-        hidden = torch.tanh(self.input(x))
-        fc1 = torch.tanh(self.bn_1(self.fc1(hidden)))
-        fc2 = torch.tanh(self.bn_2(self.fc2(fc1)))
-        out = self.out(fc2)
+        x = torch.tanh(self.input(x))
+        x = torch.tanh(self.bn_1(self.fc1(x)))
+        x = self.drop_1(x)
+        x = torch.tanh(self.bn_2(self.fc2(x)))
+        x = self.drop_2(x)
+        x = torch.tanh(self.fc3(x))
+        out = self.out(x)
 
         return out

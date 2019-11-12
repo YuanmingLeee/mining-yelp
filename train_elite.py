@@ -17,9 +17,9 @@ from models.EliteNet import EliteNet
 
 random_seed = 42
 split_ratio = .2
-bs = 64
+bs = 1024
 lr = 1e-3
-epochs = 300
+epochs = 100
 eps = 1e-8
 weight_decay = 1e-6
 CSV_PATH = DATA_DIR / 'user-profiling.csv'
@@ -181,7 +181,7 @@ def main():
             torch.save(net.state_dict(), OUTPUT_DIR / 'user-elite-{:s}'.format(name_seed))
 
     # save statistic
-    with open(OUTPUT_DIR / 'user-elite-stat-{:s}'.format(name_seed)) as f:
+    with open(OUTPUT_DIR / 'user-elite-stat-{:s}.pkl'.format(name_seed), 'wb') as f:
         training_info = {'batch_size': bs, 'epoch': epochs, 'lr': lr, 'weight_decay': weight_decay, 'eps': eps}
         stat = {'train_loss': train_losses, 'train_acc': train_accs, 'val_loss': val_losses, 'val_acc': val_accs}
         content = {'info': training_info, 'stat': stat}

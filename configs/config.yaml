@@ -1,6 +1,9 @@
 user_elite:
   input: 12
   fc1: 512
-  fc2: 512
-  fc3: 256
+  drop1: 0.2
+  fc2: 1024
+  drop2: 0.2
+  fc3: 512
+  fc4: 256
   output: 2
