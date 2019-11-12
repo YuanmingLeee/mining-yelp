@@ -4,14 +4,14 @@ import sqlite3
 import numpy as np
 import pandas as pd
 
-from configs import DATA_PATH
+from configs import DATA_DIR
 
-DB_PATH = DATA_PATH / 'yelp.sqlite'
-BUSINESS_JSON_PATH = DATA_PATH / 'yelp_academic_dataset_business.json'
-USER_JSON_PATH = DATA_PATH / 'yelp_academic_dataset_user.json'
-REVIEW_JSON_PATH = DATA_PATH / 'yelp_academic_dataset_review.json'
-CHECKIN_JSON_PATH = DATA_PATH / 'yelp_academic_dataset_checkin.json'
-TIP_JSON_PATH = DATA_PATH / 'yelp_academic_dataset_tip.json'
+DB_PATH = DATA_DIR / 'yelp.sqlite'
+BUSINESS_JSON_PATH = DATA_DIR / 'yelp_academic_dataset_business.json'
+USER_JSON_PATH = DATA_DIR / 'yelp_academic_dataset_user.json'
+REVIEW_JSON_PATH = DATA_DIR / 'yelp_academic_dataset_review.json'
+CHECKIN_JSON_PATH = DATA_DIR / 'yelp_academic_dataset_checkin.json'
+TIP_JSON_PATH = DATA_DIR / 'yelp_academic_dataset_tip.json'
 
 
 def load_business():
