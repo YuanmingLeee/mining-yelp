@@ -5,7 +5,7 @@ import pandas as pd
 from configs import DB_PATH, DATA_DIR
 
 
-def csv_prepare():
+def user_elite_csv():
     """
     Prepare data from database and save the queried table as a csv file.
     """
@@ -85,7 +85,7 @@ def csv_prepare():
         AND   u.user_id = _t.user_id
         AND   u.user_id = _r.user_id;
         """, conn)
-        df.to_csv(DATA_DIR / 'user-profiling.csv', index=False)
+        df.to_csv(DATA_DIR / 'user-elite.csv', index=False)
 
         # post-condition
         # noinspection SqlResolve
@@ -96,7 +96,7 @@ def csv_prepare():
         """)
 
 
-def csv_prepare_cleaned():
+def user_elite_cleaned_csv():
     """Prepare data from database and save the queried table as a csv file. This version
     only include reviews / tips years between 2010-2016. Elite users before 2010 or
     after 2016 are excluded.
@@ -187,7 +187,7 @@ def csv_prepare_cleaned():
         AND   u.user_id = _r.user_id
         AND   u.user_id NOT IN _eu
         """, conn)
-        df.to_csv(DATA_DIR / 'user-profiling-cleaned.csv', index=False)
+        df.to_csv(DATA_DIR / 'user-elite-cleaned.csv', index=False)
 
         # post-condition
         # noinspection SqlResolve
@@ -199,6 +199,43 @@ def csv_prepare_cleaned():
         """)
 
 
+def reaction_csv():
+    with sqlite3.connect(DB_PATH) as conn:
+        c = conn.cursor()
+        # pre-condition
+        c.executescript("""
+        CREATE TEMP TABLE _r AS
+        SELECT review_id,
+               business_id,
+               date,
+               text,
+               SUM(useful + funny + cool) as reactions
+        FROM review
+        WHERE business_id IN (
+            SELECT business_id
+            FROM business
+            WHERE review_count >= 1000
+              AND is_open = 1
+        )
+        GROUP BY review_id;
+        """)
+
+        # noinspection SqlResolve
+        df = pd.read_sql("""
+        SELECT *
+        FROM _r
+        ORDER BY business_id, date;
+        """, conn)
+        df.to_csv(DATA_DIR / 'reaction.csv', index=False)
+
+        # post-condition
+        # noinspection SqlResolve
+        c.executescript("""
+        DROP TABLE _r;
+        """)
+
+
 if __name__ == '__main__':
-    # csv_prepare()
-    csv_prepare_cleaned()
+    user_elite_csv()
+    user_elite_cleaned_csv()
+    reaction_csv()

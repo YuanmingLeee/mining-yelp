@@ -32,20 +32,20 @@ def load_user():
 
     # free after commit
     with sqlite3.connect(DB_PATH) as conn:
-        # print('Processing user data frame')
-        # user_df = df.drop(columns=['friends', 'elite'])
-        # print('Commit user data into database')
-        # user_df.to_sql(name='users', con=conn, index=False, if_exists='append')
-        # conn.commit()
-        # del user_df
-        #
-        # print('Processing user friends data frame')
-        # user_friends_df = list_to_multirow(df, 'user_id', 'friends')
-        # user_friends_df.rename(columns={'friends': 'friend_user_id'}, inplace=True)
-        # print('Commit user data into database')
-        # user_friends_df.to_sql(name='user_friends', con=conn, index=False, if_exists='append')
-        # conn.commit()
-        # del user_friends_df
+        print('Processing user data frame')
+        user_df = df.drop(columns=['friends', 'elite'])
+        print('Commit user data into database')
+        user_df.to_sql(name='users', con=conn, index=False, if_exists='append')
+        conn.commit()
+        del user_df
+
+        print('Processing user friends data frame')
+        user_friends_df = list_to_multirow(df, 'user_id', 'friends')
+        user_friends_df.rename(columns={'friends': 'friend_user_id'}, inplace=True)
+        print('Commit user data into database')
+        user_friends_df.to_sql(name='user_friends', con=conn, index=False, if_exists='append')
+        conn.commit()
+        del user_friends_df
 
         print('Processing user elite data frame')
         elite_df = list_to_multirow(df, 'user_id', 'elite', separator=',')
