@@ -1,8 +1,8 @@
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-from torch.nn import functional as F
-import numpy as np
+
 
 class TextLSTM(nn.Module):
 
@@ -20,11 +20,11 @@ class TextLSTM(nn.Module):
         self.lstm = nn.LSTM(embedding_length, hidden_size)
         self.fc = nn.Linear(hidden_size, output_size)
         self.sfm = nn.Softmax()
-    
+
     def forward(self, x, batch_size):
         vec = self.word_embeddings(x)
         vec = vec.permute(1, 0, 2)
-        
+
         h_0 = Variable(torch.zeros(1, batch_size, self.hidden_size)).double().cuda()
         c_0 = Variable(torch.zeros(1, batch_size, self.hidden_size)).double().cuda()
         output, (final_hidden_state, final_cell_state) = self.lstm(vec, (h_0, c_0))
