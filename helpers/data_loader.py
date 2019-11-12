@@ -10,12 +10,10 @@ from torch.utils import data as tdata
 class EliteDataset(tdata.Dataset):
     def __init__(self, path: Union[str, Path, IO], transform: Callable = None):
         dataset = pd.read_csv(path)
-
-        _x = dataset.iloc[:, :-1]
         if transform:
-            _x = transform(_x)
-        self._x = torch.tensor(_x.values, dtype=torch.float64)
-        self._y = torch.tensor(dataset.iloc[:, -1].values, dtype=torch.int32)
+            dataset = transform(dataset)
+        self._x = torch.tensor(dataset.values[:, :-1], dtype=torch.float)
+        self._y = torch.tensor(dataset.iloc[:, -1].values, dtype=torch.long)
 
     def __len__(self):
         return self._x.shape[0]
@@ -45,9 +43,3 @@ def preprocessor(df: pd.DataFrame):
     # min max scaler
     scaler = preprocessing.MinMaxScaler()
     return pd.DataFrame(scaler.fit_transform(result))
-
-
-if __name__ == '__main__':
-    from configs import DATA_DIR
-
-    dataset = EliteDataset(DATA_DIR / 'user-profiling.csv', preprocessor)

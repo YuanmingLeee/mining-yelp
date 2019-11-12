@@ -1,22 +1,27 @@
-import torch.nn.functional as F
+import torch
 from torch import nn
+
+from configs import cfg
 
 
 class EliteNet(nn.Module):
     def __init__(self):
         super().__init__()
+        # get config
+        C = cfg.user_elite
 
-        self.input = nn.Linear(15, 512, bias=True)
-        self.fc1 = nn.Linear(512, 512, bias=True)
-        self.bn_1 = nn.BatchNorm2d(512)
-        self.fc2 = nn.Linear(512, 256, bias=True)
-        self.bn_2 = nn.BatchNorm2d(256)
-        self.out = nn.Linear(256, 2, bias=True)
+        # structure
+        self.input = nn.Linear(C.input, C.fc1, bias=True)
+        self.fc1 = nn.Linear(C.fc1, C.fc2, bias=True)
+        self.bn_1 = nn.BatchNorm1d(C.fc2)
+        self.fc2 = nn.Linear(C.fc2, C.fc3, bias=True)
+        self.bn_2 = nn.BatchNorm1d(C.fc3)
+        self.out = nn.Linear(C.fc3, C.output, bias=True)
 
     def forward(self, x):
-        hidden = F.tanh(self.input(x))
-        fc1 = F.tanh(self.bn_1(self.fc1(hidden)))
-        fc2 = F.tanh(self.bn_2(self.fc2(fc1)))
+        hidden = torch.tanh(self.input(x))
+        fc1 = torch.tanh(self.bn_1(self.fc1(hidden)))
+        fc2 = torch.tanh(self.bn_2(self.fc2(fc1)))
         out = self.out(fc2)
 
         return out
