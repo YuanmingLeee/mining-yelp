@@ -235,7 +235,23 @@ def reaction_csv():
         """)
 
 
+def prenet_csv():
+    with sqlite3.connect(DB_PATH) as conn:
+        c = conn.cursor()
+        # create table from csv
+        df: pd.DataFrame = pd.read_csv(DATA_DIR / 'user-profiling-cleaned.csv')
+        df2: pd.DataFrame = pd.read_sql("""
+            SELECT text, user_id, (useful > 10) as usefulness 
+            FROM review 
+            WHERE STRFTIME('%Y', date) BETWEEN '2010' AND '2016'
+        """, con=conn)
+        # noinspection SqlResolve
+        df_join = pd.merge(df, df2, on='user_id')
+        df_join.to_csv(DATA_DIR / 'combined-usefulness.csv', index=False)
+
+
 if __name__ == '__main__':
     user_elite_csv()
     user_elite_cleaned_csv()
     reaction_csv()
+    prenet_csv()

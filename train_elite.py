@@ -11,7 +11,7 @@ from torch.optim.optimizer import Optimizer
 from torch.utils import data as tdata
 
 from configs import DATA_DIR, OUTPUT_DIR
-from data_engine.data_loader import preprocessor, load_data
+from data_engine.data_loader import elite_preprocessor, load_data
 from data_engine.dataset import EliteDataset
 from models.EliteNet import EliteNet
 from .helper import get_accuracy
@@ -26,8 +26,13 @@ weight_decay = 1e-6
 CSV_PATH = DATA_DIR / 'user-profiling.csv'
 
 
-def train(net: nn.Module, data_loader: tdata.DataLoader, optimizer: Optimizer, criterion: _Loss, data_size: int = None,
-          log_batch_num: int = None):
+def train(net: nn.Module,
+          data_loader: tdata.DataLoader,
+          optimizer: Optimizer,
+          criterion: _Loss,
+          data_size: int = None,
+          log_batch_num: int = None
+          ):
     """Train one epoch
 
     Args:
@@ -77,7 +82,11 @@ def train(net: nn.Module, data_loader: tdata.DataLoader, optimizer: Optimizer, c
     return losses / dataset_size, accs / dataset_size
 
 
-def test(net: nn.Module, data_loader: tdata.DataLoader, criterion, data_size: int = None):
+def test(net: nn.Module,
+         data_loader: tdata.DataLoader,
+         criterion,
+         data_size: int = None
+         ):
     """Test (validate) one epoch of the given data
 
     Args:
@@ -110,7 +119,7 @@ def test(net: nn.Module, data_loader: tdata.DataLoader, criterion, data_size: in
 def main():
     # prepare data
     print('Loading data...')
-    dataset = EliteDataset(CSV_PATH, preprocessor)
+    dataset = EliteDataset(CSV_PATH, preprocessor=elite_preprocessor)
     train_loader, val_loader, (train_size, val_size) = load_data(dataset, split_ratio, bs=bs)
     print('Finish loading')
 
