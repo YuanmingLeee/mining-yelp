@@ -1,7 +1,6 @@
 import pickle
 from datetime import datetime
 
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import tqdm as tqdm
@@ -158,31 +157,6 @@ def main():
         stat = {'train_loss': train_losses, 'train_acc': train_accs, 'val_loss': val_losses, 'val_acc': val_accs}
         content = {'info': training_info, 'stat': stat}
         pickle.dump(content, f)
-
-
-def plot(file_path):
-    with open(file_path, 'rb') as f:
-        result = pickle.load(f)
-    stat = result['stat']
-    train_loss, train_acc, val_loss, val_acc = stat['train_loss'], stat['train_acc'], stat['val_loss'], stat['val_acc']
-    x = np.arange(1, len(train_loss) + 1)
-
-    plt.figure()
-    plt.title('loss')
-    plt.semilogy(x, train_loss, label='training')
-    plt.semilogy(x, val_loss, label='validation')
-    plt.legend()
-    plt.xlabel('epoch')
-    plt.ylabel('loss')
-    plt.show()
-
-    plt.figure()
-    plt.title('accuracy')
-    plt.plot(x, train_acc, label='training')
-    plt.plot(x, val_acc, label='validation')
-    plt.xlabel('epoch')
-    plt.ylabel('accuracy')
-    plt.show()
 
 
 if __name__ == '__main__':
