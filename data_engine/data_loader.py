@@ -83,6 +83,6 @@ def text_preprocessor(df: pd.DataFrame, word2int_mapping):
 
         df.iloc[[index]]['text'] = int_vec
 
-    return df[['text', 'label']]
+    return df[['text', 'usefulness']]
 
 

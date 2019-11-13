@@ -44,21 +44,26 @@ class UsefulDataset(tdata.Dataset):
 
     def __getitem__(self, item):
         text = self._x[item]
-        label = self._y[item]
+        usefullness = self._y[item]
 
-        sample = { 'text' : text, 'label': label}
+        sample = { 'text' : text, 'usefullness': usefullness}
         return sample
 
 class PreNetDataset(tdata.Dataset):
+    # word2int mapping_path: PATH/examples/TextLSTM/data/mapping.pickle
     def __init__(self, path: Union[str, Path, IO], preprocessor, word2int_mapping_path):
+
         dataset = pd.read_csv(path)
 
         if preprocessor:
             dataset = preprocessor(dataset)
 
+        with open(word2int_mapping_path, 'rb') as f:
+            word2int_mapping = pickle.load(f)
+
         # split and pass down
         self.elite_dataset = EliteDataset(dataset.iloc[:, ...])
-        self.useful_dataset = 
+        self.useful_dataset = UsefulDataset(dataset, word2int_mapping)
         self._y = torch.tensor(dataset.iloc[:, -1].values, dtype=torch.long)
 
     def __len__(self):
