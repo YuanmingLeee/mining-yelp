@@ -2,7 +2,9 @@ import numpy as np
 import pandas as pd
 import torch.utils.data as tdata
 from sklearn import preprocessing
-
+import nltk
+from nltk.corpus import stopwords
+from string import punctuation
 
 def load_data(dataset: tdata.Dataset, ratio: float, bs: int):
     """Prepare data from torch dataset for training and validation.
@@ -57,3 +59,30 @@ def elite_preprocessor(df: pd.DataFrame):
 
 def prenet_preprocessor(df: pd.DataFrame):
     return preprocessor(df, 'usefulness')
+
+def map_sentence_to_int(word_list, mapping):
+    res = []
+    for word in word_list:
+        if word in mapping:
+            res.append(mapping[word])
+        else:
+            res.append(mapping['unk'])
+    return res
+
+def text_preprocessor(df: pd.DataFrame, word2int_mapping):
+    for index, row in df.iterrows():
+        text = row['text']
+        tokens = nltk.word_tokenize(line[0])
+        tokens = [word.lower() for word in tokens if word not in punctuation and word not in stop_words]
+        int_vec = map_sentence_to_int(tokens, word2int_mapping)
+        
+        if len(int_vec) > 2000:
+            int_vec = int_vec[ : 200]
+        else:
+            int_vec = list(np.zeros(200 - len(int_vec))) + int_vec
+
+        df.iloc[[index]]['text'] = int_vec
+
+    return df[['text', 'usefulness']]
+
+
