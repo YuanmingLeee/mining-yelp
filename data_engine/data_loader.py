@@ -1,10 +1,12 @@
+from string import punctuation
+
+import nltk
 import numpy as np
 import pandas as pd
 import torch.utils.data as tdata
-from sklearn import preprocessing
-import nltk
 from nltk.corpus import stopwords
-from string import punctuation
+from sklearn import preprocessing
+
 
 def load_data(dataset: tdata.Dataset, ratio: float, bs: int):
     """Prepare data from torch dataset for training and validation.
@@ -35,12 +37,12 @@ def load_data(dataset: tdata.Dataset, ratio: float, bs: int):
     return train_loader, val_loader, (len(train_indices), len(val_indices))
 
 
-def preprocessor(df: pd.DataFrame, label_name: str):
+def elite_preprocessor(df: pd.DataFrame):
     # remove unrelated info
     df.drop(columns='user_id', inplace=True)
     # split by label and balance
-    positive_df = df.loc[getattr(df, label_name) == 1]
-    negative_df = df.loc[getattr(df, label_name) == 0].sample(positive_df.shape[0])
+    positive_df = df.loc[df.elite == 1]
+    negative_df = df.loc[df.elite == 0].sample(positive_df.shape[0])
 
     # concatenate and shuffle
     result = pd.concat([positive_df, negative_df]).sample(frac=1)
@@ -53,12 +55,24 @@ def preprocessor(df: pd.DataFrame, label_name: str):
     return pd.DataFrame(scaler.fit_transform(result))
 
 
-def elite_preprocessor(df: pd.DataFrame):
-    return preprocessor(df, 'elite')
-
-
 def prenet_preprocessor(df: pd.DataFrame):
-    return preprocessor(df, 'usefulness')
+    # remove unrelated info
+    df.drop(columns='user_id', inplace=True)
+    # split by label and balance
+    positive_df = df.loc[df.usefulness == 1]
+    negative_df = df.loc[df.usefulness == 0].sample(positive_df.shape[0])
+
+    # concatenate and shuffle
+    result = pd.concat([positive_df, negative_df]).sample(frac=1)
+
+    # clean
+    del positive_df, negative_df
+
+    # min max scaler
+    scaler = preprocessing.MinMaxScaler()
+    result.iloc[:, :13] = scaler.fit_transform(result.iloc[:, :13])
+    return result
+
 
 def map_sentence_to_int(word_list, mapping):
     res = []
@@ -69,20 +83,23 @@ def map_sentence_to_int(word_list, mapping):
             res.append(mapping['unk'])
     return res
 
+
 def text_preprocessor(df: pd.DataFrame, word2int_mapping):
-    for index, row in df.iterrows():
-        text = row['text']
-        tokens = nltk.word_tokenize(line[0])
-        tokens = [word.lower() for word in tokens if word not in punctuation and word not in stop_words]
+    def text2int_vec(text: str):
+        tokens = nltk.word_tokenize(text)
+        tokens = list(filter(lambda x: x not in punctuation and x not in stop_words, map(str.lower, tokens)))
         int_vec = map_sentence_to_int(tokens, word2int_mapping)
-        
-        if len(int_vec) > 2000:
-            int_vec = int_vec[ : 200]
+
+        if len(int_vec) > 200:
+            int_vec = int_vec[: 200]
         else:
             int_vec = list(np.zeros(200 - len(int_vec))) + int_vec
+        return pd.Series(int_vec)
 
-        df.iloc[[index]]['text'] = int_vec
+    stop_words = set(stopwords.words('english'))
+    vectors = df.text.apply(text2int_vec)
 
-    return df[['text', 'usefulness']]
-
-
+    return np.concatenate(
+        (vectors.values, df.usefulness.values.reshape(-1, 1)),
+        axis=1
+    )

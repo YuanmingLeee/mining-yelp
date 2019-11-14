@@ -11,7 +11,9 @@ def _freeze(model: nn.Module):
 class PreNet(nn.Module):
     def __init__(self, backbone: nn.Module, profiling: nn.Module, pretrained=True):
         super().__init__()
-        self.backbone = nn.Sequential(*list(backbone.children())[:-1])
+        self.backbone = backbone
+        self.backbone.fc = nn.Identity()
+        self.backbone.sfm = nn.Identity()
         self.profiling = nn.Sequential(*list(profiling.children())[:-1])
         self.fc1 = nn.Linear(512, 256, bias=True)
         self.bn1 = nn.BatchNorm1d(256)

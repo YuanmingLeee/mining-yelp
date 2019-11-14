@@ -1,6 +1,7 @@
+import numpy as np
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-import numpy as np
+
 
 def create_dataloader(x_dir, y_dir, batch_size):
     # load data
