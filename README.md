@@ -16,4 +16,10 @@ mkdir -p {data,output}
 
 ## Download Data
 
+2. download nltk model
+```python
+import nltk
+nltk.download('stopwords')
+nltk.download('punkt')
+```
 ## Example

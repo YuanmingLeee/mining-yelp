@@ -11,19 +11,22 @@ from torch.optim.optimizer import Optimizer
 from torch.utils import data as tdata
 
 from configs import DATA_DIR, OUTPUT_DIR, BASE_DIR
-from data_engine.data_loader import elite_preprocessor, load_data
-from data_engine.dataset import EliteDataset
+from data_engine.data_loader import load_data, prenet_preprocessor
+from data_engine.dataset import PreNetDataset
+from helper import get_accuracy
 from models.EliteNet import EliteNet
-from .helper import get_accuracy
+from models.PreNet import PreNet
+from models.TextLSTM import TextLSTM
 
 random_seed = 42
 split_ratio = .2
-bs = 1024
+bs = 64
 lr = 1e-3
 epochs = 100
 eps = 1e-8
 weight_decay = 1e-6
-CSV_PATH = DATA_DIR / 'user-profiling.csv'
+CSV_PATH = DATA_DIR / 'combined-usefulness.csv'
+WORD_2_INDEX_MAPPING_PATH = DATA_DIR / 'mapping.pickle'
 
 
 def train(net: nn.Module,
@@ -54,13 +57,14 @@ def train(net: nn.Module,
     running_accs = 0.
 
     for batch_num, samples in enumerate(data_loader, 0):
-        features: torch.Tensor = samples['features'].cuda()
-        labels: torch.Tensor = samples['label'].cuda()
+        elite = samples['elite'].cuda()
+        text = samples['text'].cuda()
+        labels = samples['label'].cuda()
 
         optimizer.zero_grad()
 
         # forward + backward + optimize
-        outputs = net(features)
+        outputs = net(text, elite)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
@@ -104,11 +108,12 @@ def test(net: nn.Module,
     acc = 0.
 
     for samples in data_loader:
-        features = samples['features'].cuda()
+        elite = samples['elite'].cuda()
+        text = samples['text'].cuda()
         labels = samples['label'].cuda()
 
         # forward
-        output = net(features)
+        output = net(text, elite)
         loss += criterion(output, labels).item()
         acc += get_accuracy(output, labels)
 
@@ -119,12 +124,16 @@ def test(net: nn.Module,
 def main():
     # prepare data
     print('Loading data...')
-    dataset = EliteDataset(CSV_PATH, preprocessor=elite_preprocessor)
+    dataset = PreNetDataset(CSV_PATH, preprocessor=prenet_preprocessor, word2int_mapping_path=WORD_2_INDEX_MAPPING_PATH)
     train_loader, val_loader, (train_size, val_size) = load_data(dataset, split_ratio, bs=bs)
     print('Finish loading')
 
     # model
-    net = EliteNet(BASE_DIR / 'configs/user-elite.yaml').cuda()
+    elite_net = EliteNet(BASE_DIR / 'configs/user-elite.yaml').cuda()
+    elite_net.load_state_dict(torch.load(OUTPUT_DIR / 'user-elite-clean.pth'))
+    test_lstm = TextLSTM(BASE_DIR / 'configs/text-lstm.yaml').cuda()
+    test_lstm.load_state_dict(torch.load(OUTPUT_DIR / 'useful_pred_lstm_weights.pth'))
+    net = PreNet(test_lstm, elite_net).cuda()
 
     # optimizer
     optimizer = optim.Adam(net.parameters(), lr=lr, eps=eps, weight_decay=weight_decay)
@@ -158,10 +167,10 @@ def main():
         # save model
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            torch.save(net.state_dict(), OUTPUT_DIR / 'user-elite-{:s}.pth'.format(name_seed))
+            torch.save(net.state_dict(), OUTPUT_DIR / 'prenet-{:s}.pth'.format(name_seed))
 
     # save statistic
-    with open(OUTPUT_DIR / 'user-elite-stat-{:s}.pkl'.format(name_seed), 'wb') as f:
+    with open(OUTPUT_DIR / 'prenet-stat-{:s}.pkl'.format(name_seed), 'wb') as f:
         training_info = {'batch_size': bs, 'epoch': epochs, 'lr': lr, 'weight_decay': weight_decay, 'eps': eps}
         stat = {'train_loss': train_losses, 'train_acc': train_accs, 'val_loss': val_losses, 'val_acc': val_accs}
         content = {'info': training_info, 'stat': stat}
