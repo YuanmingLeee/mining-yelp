@@ -15,11 +15,43 @@ mkdir -p {data,output}
 ```
 
 ## Download Data
+1. Download dataset  
+We are using [Yelp dataset](https://www.yelp.com/dataset/challenge) provided by [Kaggle](https://www.kaggle.com/yelp-dataset/yelp-dataset/download). The dataset contains 5 JSON files, 8 GB after unzipped.
 
-2. download nltk model
-```python
-import nltk
-nltk.download('stopwords')
-nltk.download('punkt')
-```
+2. Download nltk model
+    ```python
+    import nltk
+    nltk.download('stopwords')
+    nltk.download('punkt')
+    ```
+3. Download pre-trained weights
+
+## Prepare Data
+
 ## Example
+1. Train user elite classification
+    ```shell script
+    python train-user-elite.py
+    ```
+    You may see script arguments by
+    ```shell script
+    python train-user-elite.py -h
+    ```
+2. Train LSTM usefulness classification
+ 
+3. Train multimodal classification using pretrained LSTM and user elite model
+    ```shell script
+    python train-multimodal-classification.py
+    ```
+    You may want to change the configuration by supplying another configuration files:
+    ```shell script
+    python train-multimodal-classification.py --config=<path-to-config.yaml>
+    ```
+    You may see script arguments by
+    ```shell script
+    python train-multimodal-classification.py -h
+    ```
+4. Visualize loss and accuracy
+    ```shell script
+    python helper.py plot <path-to-your-statistic-result.pkl>
+    ```
