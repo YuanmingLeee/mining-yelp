@@ -39,17 +39,17 @@ We are using [Yelp dataset](https://www.yelp.com/dataset/challenge) provided by 
     ```
 2. Train LSTM usefulness classification
  
-3. Train multimodal classification using pretrained LSTM and user elite model
+3. Train multimodal classifier using pretrained LSTM and user elite model
     ```shell script
-    python train-multimodal-classification.py
+    python train-multimodal-classifier.py
     ```
     You may want to change the configuration by supplying another configuration files:
     ```shell script
-    python train-multimodal-classification.py --config=<path-to-config.yaml>
+    python train-multimodal-classifier.py --config=<path-to-config.yaml>
     ```
     You may see script arguments by
     ```shell script
-    python train-multimodal-classification.py -h
+    python train-multimodal-classifier.py -h
     ```
 4. Visualize loss and accuracy
     ```shell script

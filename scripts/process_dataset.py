@@ -199,43 +199,10 @@ def user_elite_cleaned_csv():
         """)
 
 
-def reaction_csv():
-    with sqlite3.connect(DB_PATH) as conn:
-        c = conn.cursor()
-        # pre-condition
-        c.executescript("""
-        CREATE TEMP TABLE _r AS
-        SELECT review_id,
-               business_id,
-               date,
-               text,
-               SUM(useful + funny + cool) as reactions
-        FROM review
-        WHERE business_id IN (
-            SELECT business_id
-            FROM business
-            WHERE review_count >= 1000
-              AND is_open = 1
-        )
-        GROUP BY review_id;
-        """)
-
-        # noinspection SqlResolve
-        df = pd.read_sql("""
-        SELECT *
-        FROM _r
-        ORDER BY business_id, date;
-        """, conn)
-        df.to_csv(DATA_DIR / 'reaction.csv', index=False)
-
-        # post-condition
-        # noinspection SqlResolve
-        c.executescript("""
-        DROP TABLE _r;
-        """)
-
-
-def prenet_csv():
+def multimodal_classifier():
+    """
+    Create dataset used for multimodal classifier
+    """
     with sqlite3.connect(DB_PATH) as conn:
         c = conn.cursor()
         # create table from csv
@@ -253,5 +220,4 @@ def prenet_csv():
 if __name__ == '__main__':
     user_elite_csv()
     user_elite_cleaned_csv()
-    reaction_csv()
-    prenet_csv()
+    multimodal_classifier()

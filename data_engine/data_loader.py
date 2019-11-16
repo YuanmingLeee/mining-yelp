@@ -38,6 +38,13 @@ def load_data(dataset: tdata.Dataset, ratio: float, bs: int):
 
 
 def elite_preprocessor(df: pd.DataFrame):
+    """Elite net data preprocessor
+
+    Args:
+        df (pd.DataFrame): input data frame
+    Return:
+        Processed data frame
+    """
     # remove unrelated info
     df.drop(columns='user_id', inplace=True)
     # split by label and balance
@@ -55,7 +62,15 @@ def elite_preprocessor(df: pd.DataFrame):
     return pd.DataFrame(scaler.fit_transform(result))
 
 
-def prenet_preprocessor(df: pd.DataFrame):
+def multimodal_classification_preprocessor(df: pd.DataFrame):
+    """
+    Multimodal classifier data preprocessor
+
+    Args:
+        df (pd.DataFrame): input data frame read from pandas
+    Return:
+        Processed data frame
+    """
     # remove unrelated info
     df.drop(columns='user_id', inplace=True)
     # split by label and balance

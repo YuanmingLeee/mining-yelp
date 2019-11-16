@@ -4,10 +4,10 @@ import pickle
 from torch import optim
 
 from configs import DATA_DIR, BASE_DIR, OUTPUT_DIR
-from data_engine.data_loader import load_data, prenet_preprocessor
-from data_engine.dataset import PreNetDataset
-from models.PreNet import PreNet
-from trainer.multimodal_classification_trainer import MultimodalClassificationTrainer, MultimodalClassificationTester
+from data_engine.data_loader import load_data, multimodal_classification_preprocessor
+from data_engine.dataset import MultimodalClassifierDataset
+from models.MultimodalClassifier import MultimodalClassifier
+from trainer.multimodal_classification_trainer import MultimodalClassifierTrainer, MultimodalClassifierTester
 from trainer.trainer import train_net
 
 CSV_PATH = DATA_DIR / 'combined-usefulness.csv'
@@ -23,9 +23,9 @@ def parse_args():
     parser.add_argument('--weight-decay', dest='weight_decay', type=float, default=1e-6, help='weight decay rate')
     parser.add_argument('--val-train-ratio', dest='split_ratio', type=float, default=0.2,
                         help='validation set ratio to the whole dataset')
-    parser.add_argument('--output', type=str, default='multimodal-classification',
+    parser.add_argument('--output', type=str, default='multimodal-classifier',
                         help='output name of model and statistic result')
-    parser.add_argument('--config', type=str, default=str(BASE_DIR / 'configs/multimodal-classification.yaml'),
+    parser.add_argument('--config', type=str, default=str(BASE_DIR / 'configs/multimodal-classifier.yaml'),
                         help='template configuration')
 
     return parser.parse_args()
@@ -34,19 +34,21 @@ def parse_args():
 def main(args):
     # prepare data
     print('Loading data...')
-    dataset = PreNetDataset(CSV_PATH, preprocessor=prenet_preprocessor, word2int_mapping_path=WORD_2_INDEX_MAPPING_PATH)
+    dataset = MultimodalClassifierDataset(CSV_PATH,
+                                          preprocessor=multimodal_classification_preprocessor,
+                                          word2int_mapping_path=WORD_2_INDEX_MAPPING_PATH)
     train_loader, val_loader, (train_size, val_size) = load_data(dataset, args.split_ratio, bs=args.bs)
     print('Finish loading')
 
     # model
-    net = PreNet(args.config).cuda()
+    net = MultimodalClassifier(args.config).cuda()
 
     # optimizer
     optimizer = optim.Adam(net.parameters(), lr=args.lr, eps=args.eps, weight_decay=args.weight_decay)
 
     # trainer
-    trainer = MultimodalClassificationTrainer(net, optimizer=optimizer, data_loader=train_loader, data_size=train_size)
-    tester = MultimodalClassificationTester(net, data_loader=val_loader, data_size=val_size)
+    trainer = MultimodalClassifierTrainer(net, optimizer=optimizer, data_loader=train_loader, data_size=train_size)
+    tester = MultimodalClassifierTester(net, data_loader=val_loader, data_size=val_size)
 
     content = train_net(net, epochs=args.epoch, trainer=trainer, tester=tester, save_name=args.output)
 

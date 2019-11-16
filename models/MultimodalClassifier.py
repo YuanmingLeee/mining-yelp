@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from torch.utils import data as tdata
 
 from configs import parse_config, BASE_DIR
 from models.EliteNet import EliteNet
@@ -12,7 +13,7 @@ def _freeze(model: nn.Module):
             param.requires_grad = False
 
 
-class PreNet(nn.Module):
+class MultimodalClassifier(nn.Module):
     def __init__(self, config: str, pretrained: bool = True):
         super().__init__()
         self.cfg = parse_config(config)
@@ -43,3 +44,14 @@ class PreNet(nn.Module):
         x = torch.tanh(self.bn1(self.fc1(x)))
         x = self.out(x)
         return x
+
+    def batch_predict(self, data_loader: tdata.DataLoader):
+        pred = []
+        for samples in data_loader:
+            elite = samples['elite'].cuda()
+            text = samples['text'].cuda()
+
+            # forward
+            output = self.__call__(text, elite)
+            pred += torch.argmax(output, dim=1).tolist()
+        return pred

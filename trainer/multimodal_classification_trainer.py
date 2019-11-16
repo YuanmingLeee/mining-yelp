@@ -7,7 +7,7 @@ from helper import get_accuracy
 from trainer.trainer import Trainer, Tester
 
 
-class MultimodalClassificationTrainer(Trainer):
+class MultimodalClassifierTrainer(Trainer):
     def __init__(self, net: nn.Module,
                  optimizer: Optimizer,
                  data_loader: tdata.DataLoader,
@@ -71,7 +71,7 @@ class MultimodalClassificationTrainer(Trainer):
         return losses / dataset_size, accs / dataset_size
 
 
-class MultimodalClassificationTester(Tester):
+class MultimodalClassifierTester(Tester):
     def __init__(self, net: nn.Module, data_loader: tdata.DataLoader, data_size: int = None):
         super().__init__()
         self.net = net
