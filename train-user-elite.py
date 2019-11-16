@@ -1,16 +1,15 @@
 import argparse
 import pickle
 
-from torch import nn
 from torch import optim
 
 from configs import DATA_DIR, OUTPUT_DIR, BASE_DIR
 from data_engine.data_loader import elite_preprocessor, load_data
 from data_engine.dataset import EliteDataset
 from models.EliteNet import EliteNet
-from .helper import train_net
+from trainer.trainer import train_net
+from trainer.user_elite_trainer import UserEliteTrainer, UserEliteTester
 
-random_seed = 42
 CSV_PATH = DATA_DIR / 'user-profiling.csv'
 
 
@@ -44,12 +43,11 @@ def main(args):
     # optimizer
     optimizer = optim.Adam(net.parameters(), lr=args.lr, eps=args.eps, weight_decay=args.weight_decay)
 
-    # loss
-    loss = nn.CrossEntropyLoss()
+    # trainer
+    trainer = UserEliteTrainer(net, optimizer=optimizer, data_loader=train_loader, data_size=train_size)
+    tester = UserEliteTester(net, data_loader=val_loader, data_size=val_size)
 
-    content = train_net(net, args.epoch, optimizer, loss, train_loader, val_loader, train_size=train_size,
-                        val_size=val_size,
-                        save_name=args.output)
+    content = train_net(net, epochs=args.epoch, trainer=trainer, tester=tester, save_name=args.output)
 
     # save statistic
     with open(OUTPUT_DIR / '{}-stat-{}.pkl'.format(args.output, content['info']['name_seed']), 'wb') as f:

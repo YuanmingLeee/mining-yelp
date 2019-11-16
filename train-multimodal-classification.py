@@ -1,16 +1,15 @@
 import argparse
 import pickle
 
-from torch import nn
 from torch import optim
 
 from configs import DATA_DIR, BASE_DIR, OUTPUT_DIR
 from data_engine.data_loader import load_data, prenet_preprocessor
 from data_engine.dataset import PreNetDataset
-from helper import train_net
 from models.PreNet import PreNet
+from trainer.multimodal_classification_trainer import MultimodalClassificationTrainer, MultimodalClassificationTester
+from trainer.trainer import train_net
 
-random_seed = 42
 CSV_PATH = DATA_DIR / 'combined-usefulness.csv'
 WORD_2_INDEX_MAPPING_PATH = DATA_DIR / 'mapping.pickle'
 
@@ -45,12 +44,11 @@ def main(args):
     # optimizer
     optimizer = optim.Adam(net.parameters(), lr=args.lr, eps=args.eps, weight_decay=args.weight_decay)
 
-    # loss
-    loss = nn.CrossEntropyLoss()
+    # trainer
+    trainer = MultimodalClassificationTrainer(net, optimizer=optimizer, data_loader=train_loader, data_size=train_size)
+    tester = MultimodalClassificationTester(net, data_loader=val_loader, data_size=val_size)
 
-    content = train_net(net, args.epoch, optimizer, loss, train_loader, val_loader, train_size=train_size,
-                        val_size=val_size,
-                        save_name=args.output)
+    content = train_net(net, epochs=args.epoch, trainer=trainer, tester=tester, save_name=args.output)
 
     with open(OUTPUT_DIR / '{}-stat-{}.pkl'.format(args.output, content['info']['name_seed']), 'wb') as f:
         pickle.dump(content, f)
