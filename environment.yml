@@ -38,6 +38,7 @@ dependencies:
   - mkl_random=1.1.0
   - ncurses=6.1
   - ninja=1.9.0
+  - nltk=3.4.5
   - numpy=1.17.3
   - numpy-base=1.17.3
   - openssl=1.1.1d

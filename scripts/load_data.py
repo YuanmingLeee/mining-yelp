@@ -35,15 +35,17 @@ def load_user():
         print('Processing user data frame')
         user_df = df.drop(columns=['friends', 'elite'])
         print('Commit user data into database')
-        user_df.to_sql(name='users', con=conn, index=False, if_exists='append')
+        user_df.to_sql(name='users', con=conn, index=False, if_exists='append', chunksize=20000)
         conn.commit()
         del user_df
 
         print('Processing user friends data frame')
+        # this will produce a very large memory occupation, ~40GB. Please run the loading in a server, or
+        # drop us an email
         user_friends_df = list_to_multirow(df, 'user_id', 'friends')
         user_friends_df.rename(columns={'friends': 'friend_user_id'}, inplace=True)
         print('Commit user data into database')
-        user_friends_df.to_sql(name='user_friends', con=conn, index=False, if_exists='append')
+        user_friends_df.to_sql(name='user_friends', con=conn, index=False, if_exists='append', chunksize=20000)
         conn.commit()
         del user_friends_df
 
@@ -95,12 +97,12 @@ def list_to_multirow(df: pd.DataFrame, index_name: str, list_name: str, separato
 
 if __name__ == '__main__':
     print('Loading business')
-    # load_business()
+    load_business()
     print('Loading user')
     load_user()
     print('Loading review')
-    # load_review()
+    load_review()
     print('Loading checkin')
-    # load_checkin()
+    load_checkin()
     print('Loading tip')
-    # load_tip()
+    load_tip()
