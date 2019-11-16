@@ -1,7 +1,8 @@
 import torch
 from torch import nn
+from torch.utils import data as tdata
 
-from configs import parse_config
+from helper import parse_config
 
 
 class EliteNet(nn.Module):
@@ -31,3 +32,14 @@ class EliteNet(nn.Module):
         out = self.out(x)
 
         return out
+
+    def batch_predict(self, data_loader: tdata.DataLoader):
+        pred = []
+        for samples in data_loader:
+            features = samples['features'].cuda()
+            labels = samples['label'].cuda()
+
+            # forward
+            output = self.__call__(features)
+            pred += torch.argmax(output, dim=1).tolist()
+        return pred

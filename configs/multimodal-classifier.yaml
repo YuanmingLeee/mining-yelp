@@ -1,0 +1,6 @@
+BACKBONE:
+  NET: configs/text-lstm.yaml
+  WEIGHT: data/useful_pred_lstm_weights.pth
+PROFILING:
+  NET: configs/user-elite.yaml
+  WEIGHT: data/user-elite.pth

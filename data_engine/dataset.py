@@ -54,7 +54,7 @@ class UsefulDataset(tdata.Dataset):
         return sample
 
 
-class PreNetDataset(tdata.Dataset):
+class MultimodalClassifierDataset(tdata.Dataset):
     # word2int mapping_path: PATH/examples/TextLSTM/data/mapping.pickle
     def __init__(self, path: Union[str, Path, IO], preprocessor, word2int_mapping_path):
         dataset = pd.read_csv(path)
