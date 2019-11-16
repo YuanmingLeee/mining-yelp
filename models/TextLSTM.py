@@ -2,8 +2,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
+from torch.utils import data as tdata
 
-from configs import parse_config, BASE_DIR
+from configs import BASE_DIR
+from helper import parse_config
 
 
 class TextLSTM(nn.Module):
@@ -35,3 +37,6 @@ class TextLSTM(nn.Module):
         res = self.fc(final_hidden_state[-1])
         res = self.sfm(res)
         return res
+
+    def batch_predict(self, data_loader: tdata.DataLoader):
+        pass

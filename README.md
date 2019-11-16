@@ -45,7 +45,7 @@ We are using [Yelp dataset](https://www.yelp.com/dataset/challenge) provided by 
     ```
     You may want to change the configuration by supplying another configuration files:
     ```shell script
-    python train-multimodal-classifier.py --config=<path-to-config.yaml>
+    python train-multimodal-classifier.py --config=<path/to/config.yaml>
     ```
     You may see script arguments by
     ```shell script
@@ -53,5 +53,10 @@ We are using [Yelp dataset](https://www.yelp.com/dataset/challenge) provided by 
     ```
 4. Visualize loss and accuracy
     ```shell script
-    python helper.py plot <path-to-your-statistic-result.pkl>
+    python helper.py plot <path/to/your/statistic/result.pkl>
+    ```
+5. Find confusion matrix
+    ```shell script
+    python helper.py confusion-mtx --name <model-name> --model-weight <model/weight/path.pth> \
+    --split-ratio 0.2 <model/configuration/path.yaml>
     ```

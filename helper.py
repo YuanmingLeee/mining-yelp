@@ -1,9 +1,15 @@
 import argparse
+import math
 import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import yaml
+from sklearn.metrics import confusion_matrix
+
+from configs import DATA_DIR
+from models.MultimodalClassifier import MultimodalClassifier
 
 
 def parse_args():
@@ -13,7 +19,33 @@ def parse_args():
     parser_plot.add_argument('file_path', type=str, help='File path to the saved statistic file')
     parser_plot.set_defaults(func=plot)
 
+    parser_confusion_mtx = subparsers.add_parser('confusion-mtx')
+    parser_confusion_mtx.add_argument('--name', type=str, help='Case insensitive Model name, support: elite-net, '
+                                                               'textlstm, and multimodal-classifier.')
+    parser_confusion_mtx.add_argument('--split-ratio', dest='split_ratio', type=float, default=1,
+                                      help='test set split ratio from the whole dataset')
+    parser_confusion_mtx.add_argument('--bs', type=int, default=2048, help='batch size for testing')
+    parser_confusion_mtx.add_argument('--model-weight', dest='model_weight', type=str, help='Path to model weight')
+    parser_confusion_mtx.add_argument('config', type=str, help='model configuration file')
+    parser_confusion_mtx.set_defaults(func=find_confusion_matrix)
+
     return parser.parse_args()
+
+
+def parse_config(path):
+    class Struct(object):
+        def __init__(self, di):
+            for a, b in di.items():
+                if isinstance(b, (list, tuple)):
+                    setattr(self, a, [Struct(x) if isinstance(x, dict) else x for x in b])
+                else:
+                    setattr(self, a, Struct(b) if isinstance(b, dict) else b)
+
+    with open(path, 'r') as stream:
+        try:
+            return Struct(yaml.safe_load(stream))
+        except yaml.YAMLError as exc:
+            print(exc)
 
 
 def get_accuracy(scores: torch.Tensor, labels: torch.Tensor):
@@ -55,6 +87,68 @@ def plot(args):
     plt.xlabel('epoch')
     plt.ylabel('accuracy')
     plt.show()
+
+
+def find_confusion_matrix(args):
+    """Find confusion matrix given data loader
+
+    Args:
+        args: Arguments containing:
+            name (str): net work string
+            bs (int): prediction batch size
+            split_ratio (float): test set split ratio from the dataset
+            model_weight (str): saved model path
+
+    Returns:
+        Confusion matrix of the model
+    """
+    from data_engine.data_loader import load_data
+
+    args.name = args.name.lower()
+
+    if args.name == 'elite-net':
+        from data_engine.dataset import EliteDataset
+        from data_engine.data_loader import elite_preprocessor
+        from models.EliteNet import EliteNet
+
+        csv_path = DATA_DIR / 'user-profiling.csv'
+
+        dataset = EliteDataset(csv_path, preprocessor=elite_preprocessor)
+        net = EliteNet(args.config).cuda()
+    elif args.name == 'textlstm':
+        # TODO
+        return
+    elif args.name == 'multimodal-classifier':
+        from data_engine.data_loader import multimodal_classification_preprocessor
+        from data_engine.dataset import MultimodalClassifierDataset
+
+        csv_path = DATA_DIR / 'combined-usefulness.csv'
+        word_2_index_mapping_path = DATA_DIR / 'mapping.pickle'
+
+        dataset = MultimodalClassifierDataset(csv_path,
+                                              preprocessor=multimodal_classification_preprocessor,
+                                              word2int_mapping_path=word_2_index_mapping_path)
+        net = MultimodalClassifier(args.config)
+    else:
+        raise ValueError('Model name argument does not supported')
+
+    # get data loader
+    print('Test set size: {}'.format(math.ceil(len(dataset) * args.split_ratio)))
+    _, data_loader, _ = load_data(dataset, args.split_ratio, bs=args.bs)
+
+    # obtain predictions
+    net.load_state_dict(torch.load(args.model_weight))
+
+    net.eval()
+    labels = []
+    for batch in data_loader:
+        labels += batch['label'].tolist()
+    pred = net.batch_predict(data_loader)
+
+    matrix = confusion_matrix(labels, pred, labels=[0, 1])
+    print(matrix)
+
+    return matrix
 
 
 if __name__ == '__main__':
