@@ -22,7 +22,7 @@ We are using [Yelp dataset](https://www.yelp.com/dataset/challenge) provided by 
     ```shell script
     mv yelp-dataset.zip data/
     unzip yelp-dataset.zip
-    ```-
+    ```
 
 2. Download nltk model
     ```python
@@ -68,7 +68,24 @@ python process_dataset.py
 ```
 
 ## Example
-1. Train user elite classification
+1. Train XGBoost model for predicting usefulness
+    You may want to change the connection to MongoDB to read in the csv data file as Pandans Dataframe
+    ```shell script
+    python Doc2Vec_with_XGBoost.py
+    ```
+
+2. Train SVM model for predicting usefulness
+     You may want to change the connection to MongoDB to read in the csv data file as Pandans Dataframe
+    ```shell script
+    python Doc2Vec_with_SVM.py
+    ```
+
+3. Train Logistic Regression model for predicting usefulness
+    You may want to change the connection to MongoDB to read in the csv data file as Pandans Dataframe
+    ```shell script
+    python Doc2Vec_with_Logistic_Regression.py
+    ```
+4. Train user elite classification
     ```shell script
     python train-user-elite.py
     ```
@@ -76,7 +93,7 @@ python process_dataset.py
     ```shell script
     python train-user-elite.py -h
     ```
-2. Train LSTM usefulness classification  
+5. Train LSTM usefulness classification  
     You need to download the text data file and GloVe pre-trained word embedding file and put them
     in the ./data folder. The merged.csv contains sampled text data and their labels while 
     glove.6B.50d.text is the word embedding for 50 dimensions.
@@ -97,7 +114,7 @@ python process_dataset.py
     ```shell script
     python train_text_lstm.py
     ```
-3. Train multimodal classifier using pretrained LSTM and user elite model
+6. Train multimodal classifier using pretrained LSTM and user elite model
     For pretrained TextLSTM model, you need to put the mapping.pickle, 
     pretrained_weights.npy and useful_pred_lstm_weights.pth in ./data folder.
     
@@ -112,16 +129,17 @@ python process_dataset.py
     ```shell script
     python train-multimodal-classifier.py -h
     ```
-4. Visualize loss and accuracy
+7. Visualize loss and accuracy
     ```shell script
     python helper.py plot <path/to/your/statistic/result.pkl>
     ```
-5. Find confusion matrix
+8. Find confusion matrix
     ```shell script
     python helper.py confusion-mtx --name <model-name> --model-weight <model/weight/path.pth> \
     --split-ratio 0.2 <model/configuration/path.yaml>
     ```
-    split-ratio is not needed for visualizing the TextLSTM alone.
+   split-ratio is not needed for visualizing the TextLSTM alone.
+
 ## Credits
 
 ## About Us
