@@ -9,6 +9,7 @@ import torch.utils.data as tdata
 from gensim.models import Doc2Vec
 from nltk.corpus import stopwords
 from sklearn import preprocessing
+from tqdm import tqdm
 
 
 def load_torch_data(dataset: tdata.Dataset, ratio: float, bs: int):
@@ -54,7 +55,9 @@ def load_statistical_learning_data(path, model: Doc2Vec):
     with open(path, 'rb') as f:
         train_tagged, test_tagged = pickle.load(f)
 
+    print('Preprocess training data')
     train_data = tagged_data_preprocessor(model, train_tagged)
+    print('Preprocess testing data')
     test_data = tagged_data_preprocessor(model, test_tagged)
 
     return train_data, test_data
@@ -72,9 +75,9 @@ def tagged_data_preprocessor(model, tagged_doc):
          Dictionary containing features and labels
     """
     sents = tagged_doc.values
-    features, labels = zip(*[(doc.tags[0], model.infer_vector(doc.words, steps=20)) for doc in sents])
+    labels, features = zip(*[(doc.tags[0], model.infer_vector(doc.words, steps=20)) for doc in tqdm(sents)])
     features = np.asarray(features)
-    labels = np.asarray(map(int, labels))
+    labels = np.asarray(list(map(int, labels))).reshape(-1, 1)
 
     return {'features': features, 'label': labels}
 
