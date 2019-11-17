@@ -36,7 +36,7 @@ def main(args):
     # prepare data
     print('Loading data...')
     train_loader, train_size = create_text_lstm_dataloader(TRAIN_X, TRAIN_Y, args.bs)
-    val_loader, val_size = create_text_lstm_dataloader(TEST_X, TEST_Y, args.bs)
+    test_loader, test_size = create_text_lstm_dataloader(TEST_X, TEST_Y, args.bs)
 
     print('Finish loading')
 
@@ -48,7 +48,7 @@ def main(args):
 
     # trainer
     trainer = TextLstmTrainer(net, optimizer=optimizer, data_loader=train_loader, data_size=train_size)
-    tester = TextLstmTester(net, data_loader=val_loader, data_size=val_size)
+    tester = TextLstmTester(net, data_loader=test_loader, data_size=test_size)
 
     content = train_net(net, epochs=args.epoch, trainer=trainer, tester=tester, save_name=args.output)
 
