@@ -11,7 +11,7 @@ from configs import DATA_DIR, OUTPUT_DIR
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--name', type=str, help='case insensitive model name, one of logistic, svm, and xgboost')
+    parser.add_argument('name', type=str, help='case insensitive model name, one of logistic, svm, and xgboost')
 
     return parser.parse_args()
 

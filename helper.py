@@ -181,7 +181,8 @@ def predict(args):
     test_samples = test_set['features']
     test_labels = test_set['label']
 
-    preds = net.predict(test_samples, verbose=True)
+    print('Testing...')
+    preds = net.predict(test_samples)
 
     # get accuracy, f1 score and confusion matrix
     print('Testing accuracy {}'.format(accuracy_score(test_labels, preds)))

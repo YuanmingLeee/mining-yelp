@@ -2,11 +2,11 @@
 
 ## Authors
 Group 16 _(Ordered by alphabet)_  
-- Bian WU BWU007@e.ntu.edu.sg [\[GitHub\]](https://github.com/BB-27)
-- Lingzhi CAI [\[GitHub\]]()
-- Shenggui LI C170166@e.ntu.edu.sg [\[GitHub\]](https://github.com/FrankLeeeee)
-- Yanxi ZENG ZENG0112@e.ntu.edu.sg [\[GitHub\]](https://github.com/Splashingsplashes)
-- Yuanming LI yli056@e.ntu.edu.sg [\[GitHub\]](https://github.com/YuanmingLeee)
+- Bian WU [\[Email\]](mailto:BWU007@e.ntu.edu.sg) [\[GitHub\]](https://github.com/BB-27)
+- Lingzhi CAI [\[Email\]](LCAI004@e.ntu.edu.sg)[\[GitHub\]](https://github.com/lzcaisg)
+- Shenggui LI [\[Email\]](mailto:C170166@e.ntu.edu.sg) [\[GitHub\]](https://github.com/FrankLeeeee)
+- Yanxi ZENG [\[Email\]](mailto:ZENG0112@e.ntu.edu.sg) [\[GitHub\]](https://github.com/Splashingsplashes)
+- Yuanming LI [\[Email\]](mailto:yli056@e.ntu.edu.sg) [\[GitHub\]](https://github.com/YuanmingLeee)
 
 ## Install
 
@@ -22,6 +22,9 @@ conda install pytorch cudatoolkit=<your cuda version> -c pytorch
 
 # create data folders
 mkdir -p {data,output}
+
+# set python path when run
+export PYTHONPATH="${PWD}"
 ```
 
 ## Download Data
@@ -80,6 +83,7 @@ python scripts/pretrain-model.py
 
 ## Examples
 #### Statistical Learning Models
+**Note**: SVM and XGBoost may takes a very long time in prediction and testing.
 1. Train XGBoost model for predicting usefulness
     ```shell script
     python train-statistical-learning-models.py xgboost
@@ -102,6 +106,7 @@ python scripts/pretrain-model.py
     ```shell script
     python helper.py plot-roc <path/to/saved/model.pkl>
     ```
+   **Note**: when you run it in shell, you shall enable X server first.
     
 
 #### Deep Learning Models
@@ -153,6 +158,7 @@ python scripts/pretrain-model.py
     ```shell script
     python helper.py plot <path/to/your/statistic/result.pkl>
     ```
+      **Note**: when you run it in shell, you shall enable X server first.
 5. Find confusion matrix
     ```shell script
     python helper.py confusion-mtx --name <model-name> --model-weight <model/weight/path.pth> \

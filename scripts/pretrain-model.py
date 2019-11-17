@@ -30,7 +30,7 @@ def build_doc2vec_model():
         This function also saves a processed data loader for boost up.
     """
 
-    merged_review_csv_dir = DATA_DIR / 'merged_data.csv'
+    merged_review_csv_dir = DATA_DIR / 'c.csv'
 
     df = pd.read_csv(merged_review_csv_dir, names=['text', 'label'], dtype={'text': str, 'label': str})
 
@@ -91,7 +91,7 @@ def build_doc2vec_model():
     print('Building data loader for speed up')
     train_set, test_set = load_statistical_learning_data(DATA_DIR / 'tagged-dataset.pkl', model_dbow)
 
-    with open(DATA_DIR / 'logistical-data-loaders.pkl', 'wb') as f:
+    with open(DATA_DIR / 'statistical-data-loaders.pkl', 'wb') as f:
         pickle.dump((train_set, test_set), f)
 
     print('Finish')
