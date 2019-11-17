@@ -3,7 +3,7 @@
 ## Authors
 Group 16 _(Ordered by alphabet)_  
 - Bian WU [\[Email\]](mailto:BWU007@e.ntu.edu.sg) [\[GitHub\]](https://github.com/BB-27)
-- Lingzhi CAI [\[Email\]](LCAI004@e.ntu.edu.sg)[\[GitHub\]](https://github.com/lzcaisg)
+- Lingzhi CAI [\[Email\]](mailto:LCAI004@e.ntu.edu.sg)[\[GitHub\]](https://github.com/lzcaisg)
 - Shenggui LI [\[Email\]](mailto:C170166@e.ntu.edu.sg) [\[GitHub\]](https://github.com/FrankLeeeee)
 - Yanxi ZENG [\[Email\]](mailto:ZENG0112@e.ntu.edu.sg) [\[GitHub\]](https://github.com/Splashingsplashes)
 - Yuanming LI [\[Email\]](mailto:yli056@e.ntu.edu.sg) [\[GitHub\]](https://github.com/YuanmingLeee)
@@ -88,6 +88,7 @@ python scripts/pretrain-model.py
 ```
 
 ## Examples
+**Note**: You output files are all in `output/`
 #### Statistical Learning Models
 **Note**: SVM and XGBoost may takes a very long time in prediction and testing.
 1. Train XGBoost model for predicting usefulness
