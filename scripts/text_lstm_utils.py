@@ -1,26 +1,28 @@
-from string import punctuation
+import csv
+import json
+import pickle
 from collections import Counter
 from datetime import datetime as dt
-import nltk
-from nltk.corpus import stopwords
-from os.path import abspath, join, exists
 from os import makedirs
-import pandas as pd
-import json
-import csv
-from sklearn.utils import shuffle
-import matplotlib.pyplot as plt
-from tqdm import tqdm
-import numpy as np
+from os.path import join, exists
 from random import sample
-from gensim.test.utils import datapath, get_tmpfile
+from string import punctuation
+
+import matplotlib.pyplot as plt
+import nltk
+import numpy as np
+import pandas as pd
 from gensim.models import KeyedVectors
 from gensim.scripts.glove2word2vec import glove2word2vec
-import pickle
+from gensim.test.utils import datapath, get_tmpfile
+from nltk.corpus import stopwords
+from tqdm import tqdm
 
-def review_preprocessing(merged_review_csv_dir, glove_embedding_dir, output_dir, train_ratio=0.9, keep_ratio=0.2, review_length_max=300, review_length_min=10, seq_length=200, embedding_length=50):
+
+def review_preprocessing(merged_review_csv_dir, glove_embedding_dir, output_dir, train_ratio=0.9, keep_ratio=0.2,
+                         review_length_max=300, review_length_min=10, seq_length=200, embedding_length=50):
     # split data
-    train , test = split_dataset(merged_review_csv_dir, train_ratio)
+    train, test = split_dataset(merged_review_csv_dir, train_ratio)
     print("---- number of training data : {}, number of testing data : {}".format(len(train), len(test)))
 
     # tokenize and create word2int mapping
@@ -32,7 +34,7 @@ def review_preprocessing(merged_review_csv_dir, glove_embedding_dir, output_dir,
         tokens = nltk.word_tokenize(line[0])
         tokens = [word.lower() for word in tokens if word not in punctuation and word not in stop_words]
         all_words += tokens
-    
+
     # create word to int mapping
     print("---- create word2int mapping")
     mapping = create_mapping(all_words, keep_ratio)
@@ -41,7 +43,8 @@ def review_preprocessing(merged_review_csv_dir, glove_embedding_dir, output_dir,
     print("---- word to int mapping is saved")
 
     vocab_size = len(mapping) + 1
-    create_pretrained_weights(glove_dir = glove_embedding_dir, word_to_int = mapping, output_dir = output_dir, vocab_size = vocab_size, embedding_length = embedding_length)
+    create_pretrained_weights(glove_dir=glove_embedding_dir, word_to_int=mapping, output_dir=output_dir,
+                              vocab_size=vocab_size, embedding_length=embedding_length)
 
     # process both training and testing dataset and save as numpy array
     print("---- converting sentence to vector")
@@ -55,7 +58,7 @@ def review_preprocessing(merged_review_csv_dir, glove_embedding_dir, output_dir,
         tokens = nltk.word_tokenize(row[0])
         tokens = [word.lower() for word in tokens if word not in punctuation and word not in stop_words]
         int_vec = map_sentence_to_int(tokens, mapping)
-        
+
         if len(int_vec) > review_length_max or len(int_vec) < review_length_min:
             continue
 
@@ -69,7 +72,7 @@ def review_preprocessing(merged_review_csv_dir, glove_embedding_dir, output_dir,
         tokens = nltk.word_tokenize(row[0])
         tokens = [word.lower() for word in tokens if word not in punctuation and word not in stop_words]
         int_vec = map_sentence_to_int(tokens, mapping)
-        
+
         if len(int_vec) > review_length_max or len(int_vec) < review_length_min:
             continue
 
@@ -87,7 +90,7 @@ def review_preprocessing(merged_review_csv_dir, glove_embedding_dir, output_dir,
     np.save(join(output_dir, "text_lstm_train_y.npy"), train_y)
     np.save(join(output_dir, "text_lstm_test_x.npy"), test_x)
     np.save(join(output_dir, "text_lstm_test_y.npy"), test_y)
-    
+
     print("---- all dataset saved successfully!")
 
 
@@ -96,8 +99,8 @@ def create_mapping(words, keep_ratio):
     freq = sorted(counts.values())
     total_num = len(freq)
     threshold_index = int(total_num * (1 - keep_ratio))
-    sorted_counts = counts.most_common( int(keep_ratio * total_num) )
-    vocab_mapping = { w: i+1 for i, (w, c) in enumerate(sorted_counts)}
+    sorted_counts = counts.most_common(int(keep_ratio * total_num))
+    vocab_mapping = {w: i + 1 for i, (w, c) in enumerate(sorted_counts)}
     vocab_mapping['unk'] = len(vocab_mapping) + 1
     print("---- frequency for threshold : {}".format(freq[threshold_index]))
     print("---- vocab size : {}".format(len(vocab_mapping)))
@@ -122,10 +125,10 @@ def create_pretrained_weights(glove_dir, word_to_int, output_dir, vocab_size, em
 
     # load vectors
     wvmodel = KeyedVectors.load_word2vec_format(tmp_file)
-    
+
     # load weights
     print("---- creating weights from pretrained glove")
-    weights = np.zeros( (vocab_size, embedding_length))
+    weights = np.zeros((vocab_size, embedding_length))
     for i in tqdm(range(len(wvmodel.index2word))):
         try:
             word = wvmodel.index2word[i]
@@ -133,18 +136,20 @@ def create_pretrained_weights(glove_dir, word_to_int, output_dir, vocab_size, em
         except:
             continue
         weights[index, :] = wvmodel.get_vector(word)
-    
+
     save_file = join(output_dir, "pretrained_weights.npy")
     np.save(save_file, weights)
+
 
 def truncate_or_padding(tokens, seq_length):
     length = len(tokens)
 
     if length > seq_length:
-        return tokens[ : seq_length]
+        return tokens[: seq_length]
     else:
         zeros = list(np.zeros(seq_length - length))
         return zeros + tokens
+
 
 def filter_json_preprocess(review_dir, output_dir):
     print("---- checking path")
@@ -178,6 +183,7 @@ def filter_json_preprocess(review_dir, output_dir):
     output_f.close()
     print('---- saved to filtered_data.csv ...')
 
+
 def sample_review(review_dir, output_dir, n):
     print("---- checking path")
     if not exists(output_dir):
@@ -187,39 +193,29 @@ def sample_review(review_dir, output_dir, n):
     data = open(review_dir, 'r')
     data_read = csv.reader(data, delimiter=',')
 
-    #output_useless = open(join(output_dir, "useless.csv"), 'w')
     output_not_useful = open(join(output_dir, "not_very_useful.csv"), 'w')
     output_very_useful = open(join(output_dir, "very_useful.csv"), 'w')
-    #output_useless_writer = csv.writer(output_useless)
     output_not_useful_writer = csv.writer(output_not_useful)
     output_very_useful_writer = csv.writer(output_very_useful)
 
     data.readline()
 
     print("---- sample reviews")
-    #useless = []
     not_useful = []
     very_useful = []
 
     for line in tqdm(data_read):
         score = float(line[1])
         text = line[0]
-        # if score == 0:
-        #     useless.append(text)
         if score < 10:
             not_useful.append(text)
         else:
             very_useful.append(text)
 
-    #print("---- num of useless reviews: {}".format(len(useless)))
     print("---- num of not very useful reviews: {}".format(len(not_useful)))
     print("---- num of very usseful reviews: {}".format(len(very_useful)))
     print("---- storing sampled data")
-    # sample_useless = sample(useless, n)
-    # for text in tqdm(sample_useless):
-    #     output_useless_writer.writerow([text, 0])
-    # output_useless.close()
-    
+
     sample_not_useful = sample(not_useful, n)
     for text in tqdm(sample_not_useful):
         output_not_useful_writer.writerow([text, 0])
@@ -229,6 +225,7 @@ def sample_review(review_dir, output_dir, n):
     for text in tqdm(sample_very_useful):
         output_very_useful_writer.writerow([text, 1])
     output_very_useful.close()
+
 
 def count_review_length(sample_csv_dir):
     data = open(sample_csv_dir, 'r')
@@ -243,7 +240,7 @@ def count_review_length(sample_csv_dir):
         tokens = [word.lower() for word in tokens if word not in punctuation and word not in stop_words]
         counts.append(len(tokens))
         counter += 1
-    
+
     print("---- number of reviews: {}".format(counter))
     print("---- visualizing review length distribution")
     pd.Series(counts).hist(bins=100)
@@ -261,21 +258,20 @@ def split_dataset(csv_dir_list, train_ratio):
     data = pd.read_csv(csv_dir_list, header=None, usecols=[0, 1])
     limit = int(len(data) // 2 * train_ratio)
 
-    useless = data.loc[ data[1] == 0 ]
-    useful = data.loc[ data[1] == 1 ]
-    very_useful = data.loc[ data[1] == 2 ]
+    useless = data.loc[data[1] == 0]
+    useful = data.loc[data[1] == 1]
+    very_useful = data.loc[data[1] == 2]
 
     train = pd.concat([
         useless[0: limit],
         useful[0: limit],
         very_useful[0: limit]
-    ], ignore_index=True, sort =False)
+    ], ignore_index=True, sort=False)
 
     test = pd.concat([
-        useless[limit : ],
-        useful[limit : ],
-        very_useful[limit : ]
-    ], ignore_index=True, sort =False)
+        useless[limit:],
+        useful[limit:],
+        very_useful[limit:]
+    ], ignore_index=True, sort=False)
 
-    return train , test
-
+    return train, test

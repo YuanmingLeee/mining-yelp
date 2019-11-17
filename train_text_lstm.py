@@ -4,10 +4,10 @@ import pickle
 from torch import optim
 
 from configs import DATA_DIR, OUTPUT_DIR, BASE_DIR
-from data_engine.data_loader import create_text_lstm_dataloader
+from data_engine.data_loader import text_lstm_dataloader_factory
 from models.TextLSTM import TextLSTM
-from trainer.trainer import train_net
 from trainer.TextLSTM_trainer import TextLstmTrainer, TextLstmTester
+from trainer.trainer import train_net
 
 TRAIN_X = DATA_DIR / "text_lstm_train_x.npy"
 TRAIN_Y = DATA_DIR / "text_lstm_train_y.npy"
@@ -35,8 +35,8 @@ def parse_args():
 def main(args):
     # prepare data
     print('Loading data...')
-    train_loader, train_size = create_text_lstm_dataloader(TRAIN_X, TRAIN_Y, args.bs)
-    test_loader, test_size = create_text_lstm_dataloader(TEST_X, TEST_Y, args.bs)
+    train_loader, train_size = text_lstm_dataloader_factory(TRAIN_X, TRAIN_Y, args.bs)
+    test_loader, test_size = text_lstm_dataloader_factory(TEST_X, TEST_Y, args.bs)
 
     print('Finish loading')
 

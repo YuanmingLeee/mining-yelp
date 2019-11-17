@@ -4,7 +4,7 @@ import pickle
 from torch import optim
 
 from configs import DATA_DIR, OUTPUT_DIR, BASE_DIR
-from data_engine.data_loader import elite_preprocessor, load_data
+from data_engine.data_loader import elite_preprocessor, load_torch_data
 from data_engine.dataset import EliteDataset
 from models.EliteNet import EliteNet
 from trainer.trainer import train_net
@@ -34,7 +34,7 @@ def main(args):
     # prepare data
     print('Loading data...')
     dataset = EliteDataset(CSV_PATH, preprocessor=elite_preprocessor)
-    train_loader, val_loader, (train_size, val_size) = load_data(dataset, args.split_ratio, bs=args.bs)
+    train_loader, val_loader, (train_size, val_size) = load_torch_data(dataset, args.split_ratio, bs=args.bs)
     print('Finish loading')
 
     # model

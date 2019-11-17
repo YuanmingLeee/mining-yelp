@@ -86,7 +86,7 @@ def find_confusion_matrix(args):
     Returns:
         Confusion matrix of the model
     """
-    from data_engine.data_loader import load_data
+    from data_engine.data_loader import load_torch_data
 
     args.name = args.name.lower()
 
@@ -100,12 +100,12 @@ def find_confusion_matrix(args):
         dataset = EliteDataset(csv_path, preprocessor=elite_preprocessor)
         net = EliteNet(args.config).cuda()
     elif args.name == 'text-lstm':
-        from data_engine.data_loader import create_text_lstm_dataloader
+        from data_engine.data_loader import text_lstm_dataloader_factory
         from models.TextLSTM import TextLSTM
-        TEST_X = DATA_DIR / "text_lstm_test_x.npy"
-        TEST_Y = DATA_DIR / "text_lstm_test_y.npy"
+        test_x = DATA_DIR / 'text_lstm_test_x.npy'
+        test_y = DATA_DIR / 'text_lstm_test_y.npy'
 
-        data_loader, data_size = create_text_lstm_dataloader(TEST_X, TEST_Y, args.bs, shuffle=False)
+        data_loader, data_size = text_lstm_dataloader_factory(test_x, test_y, args.bs)
         net = TextLSTM(args.config)
 
     elif args.name == 'multimodal-classifier':
@@ -125,7 +125,7 @@ def find_confusion_matrix(args):
     if args.name != "text-lstm":
         # get data loader
         print('Test set size: {}'.format(math.ceil(len(dataset) * args.split_ratio)))
-        _, data_loader, _ = load_data(dataset, args.split_ratio, bs=args.bs)
+        _, data_loader, _ = load_torch_data(dataset, args.split_ratio, bs=args.bs)
 
     # obtain predictions
     net.load_state_dict(torch.load(args.model_weight))

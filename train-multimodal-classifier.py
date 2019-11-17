@@ -4,7 +4,7 @@ import pickle
 from torch import optim
 
 from configs import DATA_DIR, BASE_DIR, OUTPUT_DIR
-from data_engine.data_loader import load_data, multimodal_classification_preprocessor
+from data_engine.data_loader import load_torch_data, multimodal_classification_preprocessor
 from data_engine.dataset import MultimodalClassifierDataset
 from models.MultimodalClassifier import MultimodalClassifier
 from trainer.multimodal_classification_trainer import MultimodalClassifierTrainer, MultimodalClassifierTester
@@ -37,7 +37,7 @@ def main(args):
     dataset = MultimodalClassifierDataset(CSV_PATH,
                                           preprocessor=multimodal_classification_preprocessor,
                                           word2int_mapping_path=WORD_2_INDEX_MAPPING_PATH)
-    train_loader, val_loader, (train_size, val_size) = load_data(dataset, args.split_ratio, bs=args.bs)
+    train_loader, val_loader, (train_size, val_size) = load_torch_data(dataset, args.split_ratio, bs=args.bs)
     print('Finish loading')
 
     # model
