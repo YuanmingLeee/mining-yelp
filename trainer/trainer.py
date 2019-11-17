@@ -69,7 +69,7 @@ def train_net(net: nn.Module,
         train_losses[epoch], train_accs[epoch] = train_loss, train_acc
         val_losses[epoch], val_accs[epoch] = val_loss, val_acc
 
-        t.set_description('[epoch {:d}] train loss {:g} | acc {:g} || val loss {:g} | acc {:g}'
+        t.set_description('[epoch {:d}] train loss {:g} | acc {:g} || test loss {:g} | acc {:g}'
                           .format(epoch, train_loss, train_acc, val_loss, val_acc))
 
         # save model
@@ -77,6 +77,6 @@ def train_net(net: nn.Module,
             best_val_loss = val_loss
             torch.save(net.state_dict(), OUTPUT_DIR / '{}-{:s}.pth'.format(save_name, name_seed))
 
-    stat = {'train_loss': train_losses, 'train_acc': train_accs, 'val_loss': val_losses, 'val_acc': val_accs}
+    stat = {'train_loss': train_losses, 'train_acc': train_accs, 'test_loss': val_losses, 'test_acc': val_accs}
 
     return {'stat': stat, 'info': {'name_seed': name_seed}}

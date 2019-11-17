@@ -5,12 +5,10 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import yaml
 from sklearn.metrics import confusion_matrix
 
 from configs import DATA_DIR
 from models.MultimodalClassifier import MultimodalClassifier
-
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -30,23 +28,6 @@ def parse_args():
     parser_confusion_mtx.set_defaults(func=find_confusion_matrix)
 
     return parser.parse_args()
-
-
-def parse_config(path):
-    class Struct(object):
-        def __init__(self, di):
-            for a, b in di.items():
-                if isinstance(b, (list, tuple)):
-                    setattr(self, a, [Struct(x) if isinstance(x, dict) else x for x in b])
-                else:
-                    setattr(self, a, Struct(b) if isinstance(b, dict) else b)
-
-    with open(path, 'r') as stream:
-        try:
-            return Struct(yaml.safe_load(stream))
-        except yaml.YAMLError as exc:
-            print(exc)
-
 
 def get_accuracy(scores: torch.Tensor, labels: torch.Tensor):
     predicted_labels = scores.argmax(dim=1)
@@ -149,7 +130,6 @@ def find_confusion_matrix(args):
     print(matrix)
 
     return matrix
-
 
 if __name__ == '__main__':
     args_ = parse_args()

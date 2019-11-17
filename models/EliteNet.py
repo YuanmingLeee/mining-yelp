@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.utils import data as tdata
 
-from helper import parse_config
+from parser import parse_config
 
 
 class EliteNet(nn.Module):

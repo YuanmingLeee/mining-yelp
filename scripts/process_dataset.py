@@ -3,7 +3,7 @@ import sqlite3
 import pandas as pd
 
 from configs import DB_PATH, DATA_DIR
-
+from scripts.text_lstm_utils import review_preprocessing
 
 def user_elite_cleaned_csv():
     """Prepare data from database and save the queried table as a csv file. This version
@@ -125,7 +125,13 @@ def multimodal_classifier():
         df_join = pd.merge(df, df2, on='user_id')
         df_join.to_csv(DATA_DIR / 'combined-usefulness.csv', index=False)
 
+def text_lstm():
+    merged_review_csv_dir = DATA_DIR / "merged_data.csv"
+    glove_embedding_dir = DATA_DIR / "glove.6B.50d.txt"
+    output_dir = DATA_DIR
+    review_preprocessing(merged_review_csv_dir, glove_embedding_dir, output_dir)
 
 if __name__ == '__main__':
     user_elite_cleaned_csv()
     multimodal_classifier()
+    text_lstm()
