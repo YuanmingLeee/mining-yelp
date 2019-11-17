@@ -73,9 +73,31 @@ python process_dataset.py
     ```shell script
     python train-user-elite.py -h
     ```
-2. Train LSTM usefulness classification
- 
+2. Train LSTM usefulness classification  
+    You need to download the text data file and GloVe pre-trained word embedding file and put them
+    in the ./data folder. The merged.csv contains sampled text data and their labels while 
+    glove.6B.50d.text is the word embedding for 50 dimensions.
+    
+    First, preprocess the data by process_dataset.py. Remember to comment out the user_elite_cleaned_csv()
+    and multimodal_classifier() function calls and only leave text_lstm() function call.
+    
+    ```shell script
+    python scripts/process_dataset.py
+    ```
+    
+    Then train the model.
+    ```shell script
+    python train_text_lstm.py
+    ```
+   
+    You may see script arguments by
+    ```shell script
+    python train_text_lstm.py
+    ```
 3. Train multimodal classifier using pretrained LSTM and user elite model
+    For pretrained TextLSTM model, you need to put the mapping.pickle, 
+    pretrained_weights.npy and useful_pred_lstm_weights.pth in ./data folder.
+    
     ```shell script
     python train-multimodal-classifier.py
     ```
@@ -96,6 +118,7 @@ python process_dataset.py
     python helper.py confusion-mtx --name <model-name> --model-weight <model/weight/path.pth> \
     --split-ratio 0.2 <model/configuration/path.yaml>
     ```
+    split-ratio is not needed for visualizing the TextLSTM alone.
 ## Credits
 
 ## About Us
