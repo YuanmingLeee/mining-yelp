@@ -9,6 +9,9 @@ conda env create -f environment.yml
 # activate Conda env
 conda activate ntu-dm
 
+# add pytroch with specific cuda version
+conda install pytorch cudatoolkit=<your cuda version> -c pytorch
+
 # create data folders
 mkdir -p {data,output}
 ```

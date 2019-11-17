@@ -3,9 +3,9 @@ from torch import nn
 from torch.utils import data as tdata
 
 from configs import BASE_DIR
-from parser import parse_config
 from models.EliteNet import EliteNet
 from models.TextLSTM import TextLSTM
+from parser import parse_config
 
 
 def _freeze(model: nn.Module):
@@ -18,7 +18,7 @@ class MultimodalClassifier(nn.Module):
     def __init__(self, config: str, pretrained: bool = True):
         super().__init__()
         self.cfg = parse_config(config)
-        self.backbone: nn.Module = TextLSTM(BASE_DIR / self.cfg.BACKBONE.NET).cuda()
+        self.backbone = TextLSTM(BASE_DIR / self.cfg.BACKBONE.NET).cuda()
         if getattr(self.cfg.BACKBONE, 'WEIGHT', None):
             self.backbone.load_state_dict(torch.load(BASE_DIR / self.cfg.BACKBONE.WEIGHT))
         self.backbone.fc = nn.Identity()
@@ -26,10 +26,12 @@ class MultimodalClassifier(nn.Module):
 
         profiling = EliteNet(BASE_DIR / self.cfg.PROFILING.NET).cuda()
         if getattr(self.cfg.BACKBONE, 'WEIGHT', None):
-            self.backbone.load_state_dict(torch.load(BASE_DIR / self.cfg.PROFILING.WEIGHT))
+            profiling.load_state_dict(torch.load(BASE_DIR / self.cfg.PROFILING.WEIGHT))
         self.profiling = nn.Sequential(*list(profiling.children())[:-1])
 
-        self.fc1 = nn.Linear(512, 256, bias=True)
+        bottle_neck = self.backbone.cfg.HIDDEN_SIZE + profiling.cfg.FC4
+
+        self.fc1 = nn.Linear(bottle_neck, 256, bias=True)
         self.bn1 = nn.BatchNorm1d(256)
         self.out = nn.Linear(256, 2, bias=True)
 
