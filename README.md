@@ -19,7 +19,7 @@ We are using [Yelp dataset](https://www.yelp.com/dataset/challenge) provided by 
     ```shell script
     mv yelp-dataset.zip data/
     unzip yelp-dataset.zip
-    ```
+    ```-
 
 2. Download nltk model
     ```python

@@ -48,11 +48,14 @@ class MultimodalClassifier(nn.Module):
 
     def batch_predict(self, data_loader: tdata.DataLoader):
         pred = []
+        gt = []
         for samples in data_loader:
             elite = samples['elite'].cuda()
             text = samples['text'].cuda()
+            labels = samples['labels'].cuda()
+            gt += labels.tolist()
 
             # forward
             output = self.__call__(text, elite)
             pred += torch.argmax(output, dim=1).tolist()
-        return pred
+        return pred, gt

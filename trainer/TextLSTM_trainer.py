@@ -23,6 +23,7 @@ class TextLstmTrainer(Trainer):
         self.optimizer = optimizer
         self.data_loader = data_loader
         self.data_size = data_size
+        self.loss_fn = nn.CrossEntropyLoss()
 
     def __call__(self, log_batch_num: int = None):
 
@@ -40,8 +41,8 @@ class TextLstmTrainer(Trainer):
         accs = 0.
         running_loss = 0.
         running_accs = 0.
-        loss_fn = nn.CrossEntropyLoss()
-        for batch_num, (features, labels) in enumerate(self.data_loader, 0):
+
+        for batch_num, (features, labels) in enumerate(self.data_lCoader, 0):
             features: torch.Tensor = features.cuda()
             labels: torch.Tensor = labels.cuda()
 
@@ -49,7 +50,7 @@ class TextLstmTrainer(Trainer):
 
             # forward + backward + optimize
             outputs = self.net(features)
-            loss = loss_fn(outputs, labels)
+            loss = self.loss_fn(outputs, labels)
             loss.backward()
             self.optimizer.step()
             acc = get_accuracy(outputs, labels)
