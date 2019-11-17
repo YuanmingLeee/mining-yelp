@@ -5,14 +5,15 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import yaml
-from sklearn.metrics import confusion_matrix
+from sklearn import metrics
+from sklearn.metrics import confusion_matrix, accuracy_score, f1_score
 
 from configs import DATA_DIR
 from models.MultimodalClassifier import MultimodalClassifier
 
 
 def parse_args():
+    """Argument parser"""
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
     parser_plot = subparsers.add_parser('plot')
@@ -21,7 +22,7 @@ def parse_args():
 
     parser_confusion_mtx = subparsers.add_parser('confusion-mtx')
     parser_confusion_mtx.add_argument('--name', type=str, help='Case insensitive Model name, support: elite-net, '
-                                                               'textlstm, and multimodal-classifier.')
+                                                               'text-lstm, and multimodal-classifier.')
     parser_confusion_mtx.add_argument('--split-ratio', dest='split_ratio', type=float, default=1,
                                       help='test set split ratio from the whole dataset')
     parser_confusion_mtx.add_argument('--bs', type=int, default=2048, help='batch size for testing')
@@ -29,23 +30,17 @@ def parse_args():
     parser_confusion_mtx.add_argument('config', type=str, help='model configuration file')
     parser_confusion_mtx.set_defaults(func=find_confusion_matrix)
 
+    parser_predict = subparsers.add_parser('pred-statistical')
+    parser_predict.add_argument('file_path', type=str, help='File path to pickle of saved logistic regression, SVM or'
+                                                            'XGBoost model')
+    parser_predict.set_defaults(func=predict)
+
+    parser_roc = subparsers.add_parser('plot-roc')
+    parser_roc.add_argument('file_path', type=str, help='File path to pickle of saved logistic regression, SVM or'
+                                                        'XGBoost model')
+    parser_roc.set_defaults(func=plot_roc)
+
     return parser.parse_args()
-
-
-def parse_config(path):
-    class Struct(object):
-        def __init__(self, di):
-            for a, b in di.items():
-                if isinstance(b, (list, tuple)):
-                    setattr(self, a, [Struct(x) if isinstance(x, dict) else x for x in b])
-                else:
-                    setattr(self, a, Struct(b) if isinstance(b, dict) else b)
-
-    with open(path, 'r') as stream:
-        try:
-            return Struct(yaml.safe_load(stream))
-        except yaml.YAMLError as exc:
-            print(exc)
 
 
 def get_accuracy(scores: torch.Tensor, labels: torch.Tensor):
@@ -68,13 +63,14 @@ def plot(args):
     with open(file_path, 'rb') as f:
         result = pickle.load(f)
     stat = result['stat']
-    train_loss, train_acc, val_loss, val_acc = stat['train_loss'], stat['train_acc'], stat['val_loss'], stat['val_acc']
+    train_loss, train_acc, val_loss, val_acc = stat['train_loss'], stat['train_acc'], stat['test_loss'], stat[
+        'test_acc']
     x = np.arange(1, len(train_loss) + 1)
 
     plt.figure()
     plt.title('loss')
     plt.semilogy(x, train_loss, label='training')
-    plt.semilogy(x, val_loss, label='validation')
+    plt.semilogy(x, val_loss, label='testing')
     plt.legend()
     plt.xlabel('epoch')
     plt.ylabel('loss')
@@ -83,14 +79,15 @@ def plot(args):
     plt.figure()
     plt.title('accuracy')
     plt.plot(x, train_acc, label='training')
-    plt.plot(x, val_acc, label='validation')
+    plt.plot(x, val_acc, label='testing')
     plt.xlabel('epoch')
     plt.ylabel('accuracy')
     plt.show()
 
 
 def find_confusion_matrix(args):
-    """Find confusion matrix given data loader
+    """Find confusion matrix of deep learning model given data loader. Supported models:
+        elite-net, text-lstm and multimodal-classifier.
 
     Args:
         args: Arguments containing:
@@ -102,7 +99,7 @@ def find_confusion_matrix(args):
     Returns:
         Confusion matrix of the model
     """
-    from data_engine.data_loader import load_data
+    from data_engine.data_loader import load_torch_data
 
     args.name = args.name.lower()
 
@@ -115,9 +112,15 @@ def find_confusion_matrix(args):
 
         dataset = EliteDataset(csv_path, preprocessor=elite_preprocessor)
         net = EliteNet(args.config).cuda()
-    elif args.name == 'textlstm':
-        # TODO
-        return
+    elif args.name == 'text-lstm':
+        from data_engine.data_loader import text_lstm_dataloader_factory
+        from models.TextLSTM import TextLSTM
+        test_x = DATA_DIR / 'text_lstm_test_x.npy'
+        test_y = DATA_DIR / 'text_lstm_test_y.npy'
+
+        data_loader, data_size = text_lstm_dataloader_factory(test_x, test_y, args.bs)
+        net = TextLSTM(args.config)
+
     elif args.name == 'multimodal-classifier':
         from data_engine.data_loader import multimodal_classification_preprocessor
         from data_engine.dataset import MultimodalClassifierDataset
@@ -132,23 +135,82 @@ def find_confusion_matrix(args):
     else:
         raise ValueError('Model name argument does not supported')
 
-    # get data loader
-    print('Test set size: {}'.format(math.ceil(len(dataset) * args.split_ratio)))
-    _, data_loader, _ = load_data(dataset, args.split_ratio, bs=args.bs)
+    if args.name != "text-lstm":
+        # get data loader
+        print('Test set size: {}'.format(math.ceil(len(dataset) * args.split_ratio)))
+        _, data_loader, _ = load_torch_data(dataset, args.split_ratio, bs=args.bs)
 
     # obtain predictions
     net.load_state_dict(torch.load(args.model_weight))
+    net.cuda()
 
     net.eval()
-    labels = []
-    for batch in data_loader:
-        labels += batch['label'].tolist()
-    pred = net.batch_predict(data_loader)
+
+    pred, labels = net.batch_predict(data_loader)
 
     matrix = confusion_matrix(labels, pred, labels=[0, 1])
     print(matrix)
 
     return matrix
+
+
+def _load_statistical_learning_test_data(file_path):
+    """Abstracted function for loading statistical learning test data"""
+
+    with open(DATA_DIR / 'statistical-data-loaders.pkl', 'rb') as f:
+        _, test_set = pickle.load(f)
+
+    with open(file_path, 'rb') as f:
+        net = pickle.load(f)
+
+    return net, test_set
+
+
+def predict(args):
+    """
+    Print prediction summary of a statistical learning model. This function supports:
+        logistic regression, SVM and XGBoost
+        It prints the accuracy, F1 score and confusion matrix on the processed test set loaded from
+        `data/logistical-data-loaders.pkl`
+    Args:
+        args: An argument list containing:
+            file_path (str): path to the saved data loader
+    """
+    net, test_set = _load_statistical_learning_test_data(args.file_path)
+
+    test_samples = test_set['features']
+    test_labels = test_set['label']
+
+    print('Testing...')
+    preds = net.predict(test_samples)
+
+    # get accuracy, f1 score and confusion matrix
+    print('Testing accuracy {}'.format(accuracy_score(test_labels, preds)))
+    print('Testing F1 score: \n{}'.format(f1_score(test_labels, preds, average='weighted')))
+    print('Testing Confusion Matrix score: \n{}'.format(confusion_matrix(test_labels, preds)))
+
+
+def plot_roc(args):
+    """
+    Plot roc graph of statistical learning models. Supported models are:
+        logistic regression, SVM and XGBoost
+    Args:
+        args: an argument list containing:
+            file_path (str): path to the saved data loader
+    """
+    net, test_set = _load_statistical_learning_test_data(args.file_path)
+
+    test_samples = test_set['features']
+    test_labels = test_set['label']
+
+    # get ROC graph
+    y_pred_proba = net.predict_proba(test_samples)[::, 1]
+    fpr, tpr, _ = metrics.roc_curve(test_labels, y_pred_proba)
+    auc = metrics.roc_auc_score(test_labels, y_pred_proba)
+
+    plt.plot(fpr, tpr, label="data 1, auc=" + str(auc))
+    plt.legend(loc=4)
+    plt.show()
 
 
 if __name__ == '__main__':

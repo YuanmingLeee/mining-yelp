@@ -96,7 +96,7 @@ def user_elite_cleaned_csv():
         AND   u.user_id = _r.user_id
         AND   u.user_id NOT IN _eu
         """, conn)
-        df.to_csv(DATA_DIR / 'user-elite-cleaned.csv', index=False)
+        df.to_csv(DATA_DIR / 'user-profiling.csv', index=False)
 
         # post-condition
         # noinspection SqlResolve
@@ -115,7 +115,7 @@ def multimodal_classifier():
     with sqlite3.connect(DB_PATH) as conn:
         c = conn.cursor()
         # create table from csv
-        df: pd.DataFrame = pd.read_csv(DATA_DIR / 'user-profiling-cleaned.csv')
+        df: pd.DataFrame = pd.read_csv(DATA_DIR / 'user-profiling.csv')
         df2: pd.DataFrame = pd.read_sql("""
             SELECT text, user_id, (useful > 10) as usefulness 
             FROM review 

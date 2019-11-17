@@ -7,7 +7,7 @@ from helper import get_accuracy
 from trainer.trainer import Trainer, Tester
 
 
-class UserEliteTrainer(Trainer):
+class TextLstmTrainer(Trainer):
     def __init__(self, net: nn.Module,
                  optimizer: Optimizer,
                  data_loader: tdata.DataLoader,
@@ -23,7 +23,7 @@ class UserEliteTrainer(Trainer):
         self.optimizer = optimizer
         self.data_loader = data_loader
         self.data_size = data_size
-        self.criterion = nn.CrossEntropyLoss()
+        self.loss_fn = nn.CrossEntropyLoss()
 
     def __call__(self, log_batch_num: int = None):
 
@@ -42,15 +42,15 @@ class UserEliteTrainer(Trainer):
         running_loss = 0.
         running_accs = 0.
 
-        for batch_num, samples in enumerate(self.data_loader, 0):
-            features: torch.Tensor = samples['features'].cuda()
-            labels: torch.Tensor = samples['label'].cuda()
+        for batch_num, (features, labels) in enumerate(self.data_loader, 0):
+            features: torch.Tensor = features.cuda()
+            labels: torch.Tensor = labels.cuda()
 
             self.optimizer.zero_grad()
 
             # forward + backward + optimize
             outputs = self.net(features)
-            loss = self.criterion(outputs, labels)
+            loss = self.loss_fn(outputs, labels)
             loss.backward()
             self.optimizer.step()
             acc = get_accuracy(outputs, labels)
@@ -71,20 +71,17 @@ class UserEliteTrainer(Trainer):
         return losses / dataset_size, accs / dataset_size
 
 
-class UserEliteTester(Tester):
-    def __init__(self, net: nn.Module, data_loader: tdata.DataLoader, data_size: int = None):
+class TextLstmTester(Tester):
+    def __init__(self, net: nn.Module, data_loader: tdata.DataLoader, data_size:int):
         """
         Args:
             net (nn.Module): model structure
             data_loader (torch.utils.data.DataLoader): data loader
-            data_size (int): Optional. Total number of data, necessary when using a sampler to split training and
-                validation data.
         """
         super().__init__()
         self.net = net
         self.data_loader = data_loader
         self.data_size = data_size
-        self.criterion = nn.CrossEntropyLoss()
 
     def __call__(self):
         """Test (validate) one epoch of the given data
@@ -96,15 +93,15 @@ class UserEliteTester(Tester):
 
         loss = 0.
         acc = 0.
-
-        for samples in self.data_loader:
-            features = samples['features'].cuda()
-            labels = samples['label'].cuda()
+        loss_fn = nn.CrossEntropyLoss()
+        for features, labels in self.data_loader:
+            features = features.cuda()
+            labels = labels.cuda()
 
             # forward
             output = self.net(features)
-            loss += self.criterion(output, labels).item()
+            loss += loss_fn(output, labels).item()
             acc += get_accuracy(output, labels)
 
-        dataset_size = len(self.data_loader.dataset) if not self.data_size else self.data_size
+        dataset_size = len(self.data_loader.dataset)
         return loss / dataset_size, acc / dataset_size
