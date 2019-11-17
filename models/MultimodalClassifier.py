@@ -33,7 +33,9 @@ class MultimodalClassifier(nn.Module):
 
         self.fc1 = nn.Linear(bottle_neck, 256, bias=True)
         self.bn1 = nn.BatchNorm1d(256)
-        self.out = nn.Linear(256, 2, bias=True)
+        self.fc2 = nn.Linear(256, 512, bias=True)
+        self.bn2 = nn.BatchNorm1d(512)
+        self.out = nn.Linear(512, 2, bias=True)
 
         # freeze if pretrained flag is set
         if pretrained:
@@ -45,6 +47,7 @@ class MultimodalClassifier(nn.Module):
         x2 = self.profiling(x2)
         x = torch.cat((x1, x2), dim=1)
         x = torch.tanh(self.bn1(self.fc1(x)))
+        x = torch.tanh(self.bn2(self.fc2(x)))
         x = self.out(x)
         return x
 
