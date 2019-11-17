@@ -1,45 +1,19 @@
-import nltk
-import pandas as pd
-import pymongo
-from tqdm import tqdm
-
-tqdm.pandas(desc="progress-bar")
-from gensim.models import Doc2Vec
-from sklearn import utils
-from sklearn.model_selection import train_test_split
-from gensim.models.doc2vec import TaggedDocument
-from sklearn.svm import SVC
-from sklearn import metrics
 import time
 
-start = time.time()
-
-from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
-
 import matplotlib.pyplot as plt
+import nltk
+import pandas as pd
+from gensim.models import Doc2Vec
+from gensim.models.doc2vec import TaggedDocument
+from sklearn import metrics
+from sklearn import utils
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
+from sklearn.model_selection import train_test_split
 
+from configs import DATA_DIR
 
-def DBconnect(host, db, col):
-    """connect to mondoDB"""
-    client = pymongo.MongoClient(host)
-    myDb = client[db]
-    myCollection = myDb[col]
-    return myCollection
-
-
-def getDF(Col, size):
-    """get data in dataframe format"""
-    DF0 = pd.DataFrame(list(Col.find({"label": "0"}).limit(size)))
-    label = [str(0) for row in DF0.itertuples()]
-    DF0["label"] = label
-
-    DF1 = pd.DataFrame(list(Col.find({"$or": [{"label": "1"}, {"label": 1}]}).limit(size)))
-    label = [str(1) for row in DF1.itertuples()]
-    DF1["label"] = label
-    ReviewDF = pd.concat([DF0, DF1])
-    ReviewDF = ReviewDF[['text', 'label']]
-
-    return ReviewDF
+start = time.time()
 
 
 def tokenize_text(text):
@@ -54,21 +28,22 @@ def tokenize_text(text):
 
 
 def train_vocab(train, test):
-    """train vocabulary and train model"""
+    """
+    train vocabulary and train model
+    """
     train_tagged = train.apply(
-        lambda r: TaggedDocument(words=tokenize_text(r['text']), tags=r.label), axis=1)
+        lambda r: TaggedDocument(words=tokenize_text(r.text), tags=r.label), axis=1)
     test_tagged = test.apply(
-        lambda r: TaggedDocument(words=tokenize_text(r['text']), tags=r.label), axis=1)
+        lambda r: TaggedDocument(words=tokenize_text(r.text), tags=r.label), axis=1)
 
-    """Building vocabulary"""
+    # building vocabulary
 
     model_dbow = Doc2Vec(dm=0, vector_size=300, negative=5, hs=0, min_count=2, sample=0, workers=4)
-    model_dbow.build_vocab([x for x in tqdm(train_tagged.values)])
+    model_dbow.build_vocab(train_tagged.values)
 
-    """Initialise model"""
-
+    # Initialise model
     for epoch in range(30):
-        model_dbow.train(utils.shuffle([x for x in tqdm(train_tagged.values)]), total_examples=len(train_tagged.values),
+        model_dbow.train(utils.shuffle([x for x in train_tagged.values]), total_examples=len(train_tagged.values),
                          epochs=1)
         model_dbow.alpha -= 0.002
         model_dbow.min_alpha = model_dbow.alpha
@@ -83,21 +58,21 @@ def vec_for_learning(model, tagged_docs):
     return targets, regressors
 
 
-ReviewsCol = DBconnect("mongodb://localhost:27017/", "Yelp", "ProjectDA")
-ReviewDF = getDF(ReviewsCol, 100)
-train, test = train_test_split(ReviewDF, test_size=0.3, random_state=42)
+CSV_PATH = DATA_DIR / 'merged_data.csv'
+
+df = pd.read_csv(CSV_PATH, names=['text', 'label'], dtype={'text': str, 'label': str})
+
+train, test = train_test_split(df, test_size=0.3, random_state=42)
 
 train_tagged, test_tagged, model_dbow = train_vocab(train, test)
 
 y_train, X_train = vec_for_learning(model_dbow, train_tagged)
 y_test, X_test = vec_for_learning(model_dbow, test_tagged)
 
-svclassifier = SVC(kernel='rbf', C=10, gamma=10, probability=True)
+logreg = LogisticRegression(n_jobs=1, C=1e5)
+logreg.fit(X_train, y_train)
 
-svclassifier.fit(X_train, y_train)
-
-y_pred = svclassifier.predict(X_test)
-
+y_pred = logreg.predict(X_test)
 y_test = [int(item) for item in y_test]
 y_pred = [int(item) for item in y_pred]
 
@@ -107,7 +82,7 @@ print('Testing F1 score: {}'.format(f1_score(y_test, y_pred, average='weighted')
 print('Testing Confusion Matrix score: {}'.format(confusion_matrix(y_test, y_pred)))
 
 """get ROC graph"""
-y_pred_proba = svclassifier.predict_proba(X_test)[::, 1]
+y_pred_proba = logreg.predict_proba(X_test)[::, 1]
 fpr, tpr, _ = metrics.roc_curve(y_test, y_pred_proba)
 auc = metrics.roc_auc_score(y_test, y_pred_proba)
 plt.plot(fpr, tpr, label="data 1, auc=" + str(auc))

@@ -7,14 +7,13 @@ from gensim.models import Doc2Vec
 from gensim.models.doc2vec import TaggedDocument
 from sklearn import metrics
 from sklearn import utils
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
 from tqdm import tqdm
 
 from configs import DATA_DIR
 
-tqdm.pandas(desc="progress-bar")
 start = time.time()
 
 
@@ -32,9 +31,9 @@ def tokenize_text(text):
 def train_vocab(train, test):
     """train vocabulary and train model"""
     train_tagged = train.apply(
-        lambda r: TaggedDocument(words=tokenize_text(r['text']), tags=r.label), axis=1)
+        lambda r: TaggedDocument(words=tokenize_text(r.text), tags=r.label), axis=1)
     test_tagged = test.apply(
-        lambda r: TaggedDocument(words=tokenize_text(r['text']), tags=r.label), axis=1)
+        lambda r: TaggedDocument(words=tokenize_text(r.text), tags=r.label), axis=1)
 
     """Building vocabulary"""
 
@@ -59,9 +58,10 @@ def vec_for_learning(model, tagged_docs):
     return targets, regressors
 
 
-CSV_PATH = DATA_DIR / 'merged_data.csv'
+CSV_PATH = DATA_DIR / 'c.csv'  # 'merged_data.csv'
 
-df = pd.read_csv(CSV_PATH)
+df = pd.read_csv(CSV_PATH, names=['text', 'label'], dtype={'text': str, 'label': str})
+
 train, test = train_test_split(df, test_size=0.3, random_state=42)
 
 train_tagged, test_tagged, model_dbow = train_vocab(train, test)
@@ -69,10 +69,12 @@ train_tagged, test_tagged, model_dbow = train_vocab(train, test)
 y_train, X_train = vec_for_learning(model_dbow, train_tagged)
 y_test, X_test = vec_for_learning(model_dbow, test_tagged)
 
-logreg = LogisticRegression(n_jobs=1, C=1e5)
-logreg.fit(X_train, y_train)
+svclassifier = SVC(kernel='rbf', C=10, gamma=10, probability=True)
 
-y_pred = logreg.predict(X_test)
+svclassifier.fit(X_train, y_train)
+
+y_pred = svclassifier.predict(X_test)
+
 y_test = [int(item) for item in y_test]
 y_pred = [int(item) for item in y_pred]
 
@@ -82,7 +84,7 @@ print('Testing F1 score: {}'.format(f1_score(y_test, y_pred, average='weighted')
 print('Testing Confusion Matrix score: {}'.format(confusion_matrix(y_test, y_pred)))
 
 """get ROC graph"""
-y_pred_proba = logreg.predict_proba(X_test)[::, 1]
+y_pred_proba = svclassifier.predict_proba(X_test)[::, 1]
 fpr, tpr, _ = metrics.roc_curve(y_test, y_pred_proba)
 auc = metrics.roc_auc_score(y_test, y_pred_proba)
 plt.plot(fpr, tpr, label="data 1, auc=" + str(auc))
