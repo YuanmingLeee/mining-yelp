@@ -120,7 +120,7 @@ def text_preprocessor(df: pd.DataFrame, word2int_mapping):
         axis=1
     )
 
-def create_text_lstm_dataloader(x_dir: np.ndarray, y_dir: np.ndarray, bs: int):
+def create_text_lstm_dataloader(x_dir: np.ndarray, y_dir: np.ndarray, bs: int, shuffle=True):
     # load data
     x = np.load(x_dir)
     y = np.load(y_dir).squeeze(1)

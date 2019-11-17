@@ -38,4 +38,14 @@ class TextLSTM(nn.Module):
         return res
 
     def batch_predict(self, data_loader: tdata.DataLoader):
-        pass
+        pred = []
+        gt = []
+        for features, labels in data_loader:
+            features = features.cuda()
+            labels = labels.cuda()
+            gt += labels.tolist()
+
+            # forward
+            output = self.__call__(features)
+            pred += torch.argmax(output, dim=1).tolist()
+        return pred, gt
