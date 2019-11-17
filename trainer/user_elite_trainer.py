@@ -23,6 +23,7 @@ class UserEliteTrainer(Trainer):
         self.optimizer = optimizer
         self.data_loader = data_loader
         self.data_size = data_size
+        self.criterion = nn.CrossEntropyLoss()
 
     def __call__(self, log_batch_num: int = None):
 
@@ -49,7 +50,7 @@ class UserEliteTrainer(Trainer):
 
             # forward + backward + optimize
             outputs = self.net(features)
-            loss = nn.CrossEntropyLoss(outputs, labels)
+            loss = self.criterion(outputs, labels)
             loss.backward()
             self.optimizer.step()
             acc = get_accuracy(outputs, labels)
@@ -83,6 +84,7 @@ class UserEliteTester(Tester):
         self.net = net
         self.data_loader = data_loader
         self.data_size = data_size
+        self.criterion = nn.CrossEntropyLoss()
 
     def __call__(self):
         """Test (validate) one epoch of the given data
@@ -101,7 +103,7 @@ class UserEliteTester(Tester):
 
             # forward
             output = self.net(features)
-            loss += nn.CrossEntropyLoss(output, labels).item()
+            loss += self.criterion(output, labels).item()
             acc += get_accuracy(output, labels)
 
         dataset_size = len(self.data_loader.dataset) if not self.data_size else self.data_size
