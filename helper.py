@@ -5,13 +5,15 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from sklearn.metrics import confusion_matrix
+from sklearn import metrics
+from sklearn.metrics import confusion_matrix, accuracy_score, f1_score
 
 from configs import DATA_DIR
 from models.MultimodalClassifier import MultimodalClassifier
 
 
 def parse_args():
+    """Argument parser"""
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
     parser_plot = subparsers.add_parser('plot')
@@ -27,6 +29,16 @@ def parse_args():
     parser_confusion_mtx.add_argument('--model-weight', dest='model_weight', type=str, help='Path to model weight')
     parser_confusion_mtx.add_argument('config', type=str, help='model configuration file')
     parser_confusion_mtx.set_defaults(func=find_confusion_matrix)
+
+    parser_predict = subparsers.add_parser('pred-statistical')
+    parser_predict.add_argument('file_path', type=str, help='File path to pickle of saved logistic regression, SVM or'
+                                                            'XGBoost model')
+    parser_predict.set_defaults(func=predict)
+
+    parser_roc = subparsers.add_parser('plot-roc')
+    parser_roc.add_argument('file_path', type=str, help='File path to pickle of saved logistic regression, SVM or'
+                                                        'XGBoost model')
+    parser_roc.set_defaults(func=plot_roc)
 
     return parser.parse_args()
 
@@ -74,7 +86,8 @@ def plot(args):
 
 
 def find_confusion_matrix(args):
-    """Find confusion matrix given data loader
+    """Find confusion matrix of deep learning model given data loader. Supported models:
+        elite-net, text-lstm and multimodal-classifier.
 
     Args:
         args: Arguments containing:
@@ -139,6 +152,64 @@ def find_confusion_matrix(args):
     print(matrix)
 
     return matrix
+
+
+def _load_statistical_learning_test_data(file_path):
+    """Abstracted function for loading statistical learning test data"""
+
+    with open(DATA_DIR / 'statistical-data-loaders.pkl', 'rb') as f:
+        _, test_set = pickle.load(f)
+
+    with open(file_path, 'rb') as f:
+        net = pickle.load(f)
+
+    return net, test_set
+
+
+def predict(args):
+    """
+    Print prediction summary of a statistical learning model. This function supports:
+        logistic regression, SVM and XGBoost
+        It prints the accuracy, F1 score and confusion matrix on the processed test set loaded from
+        `data/logistical-data-loaders.pkl`
+    Args:
+        args: An argument list containing:
+            file_path (str): path to the saved data loader
+    """
+    net, test_set = _load_statistical_learning_test_data(args.file_path)
+
+    test_samples = test_set['features']
+    test_labels = test_set['label']
+
+    preds = net.predict(test_samples, verbose=True)
+
+    # get accuracy, f1 score and confusion matrix
+    print('Testing accuracy {}'.format(accuracy_score(test_labels, preds)))
+    print('Testing F1 score: \n{}'.format(f1_score(test_labels, preds, average='weighted')))
+    print('Testing Confusion Matrix score: \n{}'.format(confusion_matrix(test_labels, preds)))
+
+
+def plot_roc(args):
+    """
+    Plot roc graph of statistical learning models. Supported models are:
+        logistic regression, SVM and XGBoost
+    Args:
+        args: an argument list containing:
+            file_path (str): path to the saved data loader
+    """
+    net, test_set = _load_statistical_learning_test_data(args.file_path)
+
+    test_samples = test_set['features']
+    test_labels = test_set['label']
+
+    # get ROC graph
+    y_pred_proba = net.predict_proba(test_samples)[::, 1]
+    fpr, tpr, _ = metrics.roc_curve(test_labels, y_pred_proba)
+    auc = metrics.roc_auc_score(test_labels, y_pred_proba)
+
+    plt.plot(fpr, tpr, label="data 1, auc=" + str(auc))
+    plt.legend(loc=4)
+    plt.show()
 
 
 if __name__ == '__main__':

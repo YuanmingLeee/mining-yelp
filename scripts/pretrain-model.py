@@ -98,5 +98,7 @@ def build_doc2vec_model():
 
 
 if __name__ == '__main__':
-    text_lstm()
+    print('Text LSTM...')
+    # text_lstm()
+    print('Doc2Vec...')
     build_doc2vec_model()
