@@ -54,7 +54,7 @@ class MultimodalClassifier(nn.Module):
         for samples in data_loader:
             elite = samples['elite'].cuda()
             text = samples['text'].cuda()
-            labels = samples['labels'].cuda()
+            labels = samples['label'].cuda()
             gt += labels.tolist()
 
             # forward
