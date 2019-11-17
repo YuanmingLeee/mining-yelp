@@ -30,7 +30,7 @@ def build_doc2vec_model():
         This function also saves a processed data loader for boost up.
     """
 
-    merged_review_csv_dir = DATA_DIR / 'c.csv'
+    merged_review_csv_dir = DATA_DIR / 'merged_data.csv'
 
     df = pd.read_csv(merged_review_csv_dir, names=['text', 'label'], dtype={'text': str, 'label': str})
 
@@ -99,6 +99,6 @@ def build_doc2vec_model():
 
 if __name__ == '__main__':
     print('Text LSTM...')
-    # text_lstm()
+    text_lstm()
     print('Doc2Vec...')
     build_doc2vec_model()

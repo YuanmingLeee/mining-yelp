@@ -42,7 +42,7 @@ class TextLstmTrainer(Trainer):
         running_loss = 0.
         running_accs = 0.
 
-        for batch_num, (features, labels) in enumerate(self.data_lCoader, 0):
+        for batch_num, (features, labels) in enumerate(self.data_loader, 0):
             features: torch.Tensor = features.cuda()
             labels: torch.Tensor = labels.cuda()
 

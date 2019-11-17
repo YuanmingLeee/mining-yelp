@@ -44,7 +44,7 @@ def load_user():
         # drop us an email
         user_friends_df = list_to_multirow(df, 'user_id', 'friends')
         user_friends_df.rename(columns={'friends': 'friend_user_id'}, inplace=True)
-        print('Commit user data into database')
+        print('Commit user friends into database')
         user_friends_df.to_sql(name='user_friends', con=conn, index=False, if_exists='append', chunksize=20000)
         conn.commit()
         del user_friends_df

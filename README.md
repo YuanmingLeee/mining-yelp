@@ -18,7 +18,7 @@ conda env create -f environment.yml
 conda activate ntu-dm
 
 # add pytroch with specific cuda version
-conda install pytorch cudatoolkit=<your cuda version> -c pytorch
+conda install pytorch cudatoolkit=<your cuda version> -c pytorch -y
 
 # create data folders
 mkdir -p {data,output}
@@ -32,17 +32,23 @@ export PYTHONPATH="${PWD}"
 We are using [Yelp dataset](https://www.yelp.com/dataset/challenge) provided by [Kaggle](https://www.kaggle.com/yelp-dataset/yelp-dataset/download). The dataset contains 5 JSON files, 8 GB after unzipped. Please download the data from Yelp or Kaggle, move it into `data` folder and unzip it:
     ```shell script
     mv yelp-dataset.zip data/
+    cd data
     unzip yelp-dataset.zip
+    cd -
     ```
 
 2. Download nltk model
-    ```python
-    import nltk
-    nltk.download('stopwords')
-    nltk.download('punkt')
+    ```shell script
+    python -c "import nltk; nltk.download('stopwords'); nltk.download('punkt')"
     ```
 3. Download pre-trained weights
-
+Download [weights and data](https://drive.google.com/open?id=1_l5U6HwtmzvNqYLaz0uWshDO5-zIycQG), move and unzip it:
+    ```shell script
+    mv 4032-data.zip data/
+    cd data
+    unzip 4032-data.zip
+    cd -
+    ```
 
 ## Prepare Data
 You should seek for help if you do not have a high performance computer with memory larger than
@@ -71,10 +77,10 @@ contained in the Data;
 # create SQLite database
 python scripts/create_tables.py
 
-# loading data into the database
+# loading data into the database (slow)
 python scripts/load_data.py
 
-# process dataset
+# process dataset (very slow)
 python scripts/process_dataset.py
 
 # pretrain model
@@ -119,25 +125,13 @@ python scripts/pretrain-model.py
     python train-user-elite.py -h
     ```
 2. Train LSTM usefulness classification  
-    You need to download the text data file and GloVe pre-trained word embedding file and put them
-    in the ./data folder. The merged.csv contains sampled text data and their labels while 
-    glove.6B.50d.text is the word embedding for 50 dimensions.
-    
-    First, preprocess the data by process_dataset.py. Remember to comment out the user_elite_cleaned_csv()
-    and multimodal_classifier() function calls and only leave text_lstm() function call.
-    
-    ```shell script
-    python scripts/process_dataset.py
-    ```
-    
-    Then train the model.
     ```shell script
     python train_text_lstm.py
     ```
    
     You may see script arguments by
     ```shell script
-    python train_text_lstm.py
+    python train_text_lstm.py -h
     ```
 3. Train multimodal classifier using pretrained LSTM and user elite model
     For pretrained TextLSTM model, you need to put the mapping.pickle, 
