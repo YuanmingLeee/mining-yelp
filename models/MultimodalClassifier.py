@@ -3,7 +3,7 @@ from torch import nn
 from torch.utils import data as tdata
 
 from configs import BASE_DIR
-from helper import parse_config
+from parser import parse_config
 from models.EliteNet import EliteNet
 from models.TextLSTM import TextLSTM
 

@@ -4,6 +4,7 @@ import nltk
 import numpy as np
 import pandas as pd
 import torch.utils.data as tdata
+import torch
 from nltk.corpus import stopwords
 from sklearn import preprocessing
 
@@ -118,3 +119,18 @@ def text_preprocessor(df: pd.DataFrame, word2int_mapping):
         (vectors.values, df.usefulness.values.reshape(-1, 1)),
         axis=1
     )
+
+def create_text_lstm_dataloader(x_dir: np.ndarray, y_dir: np.ndarray, bs: int):
+    # load data
+    x = np.load(x_dir)
+    y = np.load(y_dir).squeeze(1)
+    size = x.shape[0]
+
+    # create Tensor datasets
+    dataset = tdata.TensorDataset(torch.from_numpy(x).to(torch.int64),
+                            torch.from_numpy(y).to(torch.long))
+
+    # make sure to SHUFFLE your data
+    dataloader = tdata.DataLoader(dataset, shuffle=True, batch_size=bs)
+    return dataloader, size
+
