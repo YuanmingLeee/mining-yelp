@@ -96,6 +96,27 @@ python process_dataset.py
     python helper.py confusion-mtx --name <model-name> --model-weight <model/weight/path.pth> \
     --split-ratio 0.2 <model/configuration/path.yaml>
     ```
+
+6. Train XGBoost model for predicting usefulness
+    You may want to change the connection to MongoDB to read in the csv data file as Pandans Dataframe
+    ```shell script
+    python Doc2Vec_with_XGBoost.py
+    ```
+
+ 6. Train SVM model for predicting usefulness
+     You may want to change the connection to MongoDB to read in the csv data file as Pandans Dataframe
+    ```shell script
+    python Doc2Vec_with_SVM.py
+    ```
+
+7. Train Logistic Regression model for predicting usefulness
+    You may want to change the connection to MongoDB to read in the csv data file as Pandans Dataframe
+    ```shell script
+    python Doc2Vec_with_Logistic_Regression.py
+    ```
+
+
+
 ## Credits
 
 ## About Us
